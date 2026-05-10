@@ -6,6 +6,10 @@ import {
   type ITokenService,
 } from '../../../application/ports/services/ITokenService.js';
 import type { UserRole } from '@app/shared';
+import {
+  ForbiddenError,
+  UnauthenticatedError,
+} from '../../../domain/errors/DomainError.js';
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -14,32 +18,31 @@ declare module 'express-serve-static-core' {
 }
 
 export function authenticate() {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     const header = req.header('authorization') ?? '';
     const [scheme, token] = header.split(' ');
     if (scheme !== 'Bearer' || !token) {
-      res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Missing token' } });
+      next(new UnauthenticatedError('Missing bearer token'));
       return;
     }
     try {
       const tokens = container.resolve<ITokenService>(ITokenServiceToken);
-      const claims = tokens.verify(token);
-      req.auth = claims;
+      req.auth = tokens.verify(token);
       next();
     } catch {
-      res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Invalid token' } });
+      next(new UnauthenticatedError('Invalid or expired token'));
     }
   };
 }
 
 export function requireRole(...allowed: UserRole[]) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.auth) {
-      res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Not authenticated' } });
+      next(new UnauthenticatedError());
       return;
     }
     if (!allowed.includes(req.auth.role)) {
-      res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Insufficient role' } });
+      next(new ForbiddenError('Insufficient role'));
       return;
     }
     next();

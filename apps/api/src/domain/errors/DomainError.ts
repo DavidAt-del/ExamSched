@@ -8,6 +8,7 @@ export type DomainErrorCode =
   | 'USER_INACTIVE'
   | 'NOT_FOUND'
   | 'CONFLICT'
+  | 'UNAUTHENTICATED'
   | 'FORBIDDEN'
   | 'INVARIANT_VIOLATED';
 
@@ -41,6 +42,13 @@ export class NotFoundError extends DomainError {
   constructor(resource: string) {
     super('NOT_FOUND', `${resource} not found`, 404);
     this.name = 'NotFoundError';
+  }
+}
+
+export class UnauthenticatedError extends DomainError {
+  constructor(message = 'Not authenticated') {
+    super('UNAUTHENTICATED', message, 401);
+    this.name = 'UnauthenticatedError';
   }
 }
 

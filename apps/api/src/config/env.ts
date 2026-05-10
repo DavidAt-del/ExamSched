@@ -13,10 +13,6 @@ const EnvSchema = z.object({
   DB_NAME: z.string().default('proctor_scheduler'),
   // When set, the API uses Cloud SQL Connector + IAM auth (no password).
   CLOUD_SQL_INSTANCE: z.string().optional(),
-  RUN_MIGRATIONS_ONLY: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((v) => v === 'true'),
 
   // Auth
   JWT_SECRET: z.string().min(16).default('dev-only-secret-change-me-please-1234'),
@@ -25,7 +21,7 @@ const EnvSchema = z.object({
     .int()
     .positive()
     .default(60 * 60 * 8),
-  BCRYPT_COST: z.coerce.number().int().min(10).max(15).default(12),
+  BCRYPT_COST: z.coerce.number().int().min(12).max(15).default(12),
 
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
@@ -37,6 +33,13 @@ const EnvSchema = z.object({
   // GCP
   GCP_PROJECT_ID: z.string().optional(),
   USE_SECRET_MANAGER: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
+
+  // When true, the process applies migrations and exits without starting the
+  // HTTP server. Used by the Cloud Run Job that runs migrations during deploy.
+  RUN_MIGRATIONS_ONLY: z
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),

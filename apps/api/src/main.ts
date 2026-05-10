@@ -34,8 +34,8 @@ async function bootstrap(): Promise<void> {
   log.info('Database initialized and migrations applied');
 
   if (env.RUN_MIGRATIONS_ONLY) {
+    log.info('RUN_MIGRATIONS_ONLY=true; closing data source and exiting');
     await dataSource.destroy();
-    log.info('RUN_MIGRATIONS_ONLY is enabled; exiting after migrations');
     return;
   }
 

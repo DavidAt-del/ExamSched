@@ -5,6 +5,9 @@ substitutions:
   _REGION: us-central1
   _AR_REPO: proctor-scheduler
   _ENV: staging
+  # Set this on the trigger to the full Cloud SQL instance connection name,
+  # e.g. "my-project:us-central1:proctor-staging-pg".
+  _CLOUD_SQL_INSTANCE: ''
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -69,12 +72,19 @@ steps:
     args:
       - -c
       - |
+        # Migration job mirrors the API service's identity, env, secrets, and
+        # VPC connectivity so it can reach private Cloud SQL with IAM auth.
         gcloud run jobs deploy api-migrate-${_ENV} \
           --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/api:${SHORT_SHA} \
           --region ${_REGION} \
           --command node \
           --args "apps/api/dist/main.js" \
-          --set-env-vars "NODE_ENV=production,RUN_MIGRATIONS_ONLY=true" \
+          --service-account api-${_ENV}@$PROJECT_ID.iam.gserviceaccount.com \
+          --network proctor-${_ENV}-vpc \
+          --subnet proctor-${_ENV}-subnet \
+          --vpc-egress private-ranges-only \
+          --set-env-vars "NODE_ENV=production,RUN_MIGRATIONS_ONLY=true,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=api-${_ENV}@$PROJECT_ID.iam,DB_NAME=proctor_scheduler" \
+          --set-secrets "JWT_SECRET=proctor-${_ENV}-jwt-secret:latest" \
           --task-timeout 600 \
           --max-retries 1 \
           --quiet
@@ -92,6 +102,11 @@ steps:
           --port 8080 \
           --allow-unauthenticated \
           --service-account api-${_ENV}@$PROJECT_ID.iam.gserviceaccount.com \
+          --network proctor-${_ENV}-vpc \
+          --subnet proctor-${_ENV}-subnet \
+          --vpc-egress private-ranges-only \
+          --set-env-vars "NODE_ENV=production,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=api-${_ENV}@$PROJECT_ID.iam,DB_NAME=proctor_scheduler" \
+          --set-secrets "JWT_SECRET=proctor-${_ENV}-jwt-secret:latest,SENDGRID_API_KEY=proctor-${_ENV}-sendgrid-api-key:latest,EMAIL_FROM=proctor-${_ENV}-email-from:latest" \
           --quiet
 
   - id: deploy-web
