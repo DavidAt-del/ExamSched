@@ -8,6 +8,7 @@ import { IIdGeneratorToken } from '../application/ports/services/IIdGenerator.js
 import { IPasswordHasherToken } from '../application/ports/services/IPasswordHasher.js';
 import { ITokenServiceToken } from '../application/ports/services/ITokenService.js';
 import { IEmailServiceToken } from '../application/ports/services/IEmailService.js';
+import { ITempPasswordGeneratorToken } from '../application/ports/services/ITempPasswordGenerator.js';
 
 import { IUserRepositoryToken } from '../application/ports/repositories/IUserRepository.js';
 import { IExamRepositoryToken } from '../application/ports/repositories/IExamRepository.js';
@@ -17,6 +18,7 @@ import { IAssignmentRepositoryToken } from '../application/ports/repositories/IA
 
 import { SystemClock } from '../infrastructure/system/SystemClock.js';
 import { UuidIdGenerator } from '../infrastructure/system/UuidIdGenerator.js';
+import { CryptoTempPasswordGenerator } from '../infrastructure/system/CryptoTempPasswordGenerator.js';
 import { BcryptPasswordHasher } from '../infrastructure/auth/BcryptPasswordHasher.js';
 import { JwtTokenService } from '../infrastructure/auth/JwtTokenService.js';
 import {
@@ -36,6 +38,9 @@ export function registerDependencies(dataSource: DataSource): void {
 
   container.register(IClockToken, { useClass: SystemClock });
   container.register(IIdGeneratorToken, { useClass: UuidIdGenerator });
+  container.register(ITempPasswordGeneratorToken, {
+    useClass: CryptoTempPasswordGenerator,
+  });
   container.register(IPasswordHasherToken, {
     useValue: new BcryptPasswordHasher(env.BCRYPT_COST),
   });

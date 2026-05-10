@@ -57,14 +57,14 @@ describe('SubmitAvailabilityUseCase', () => {
   const fixedNow = new Date('2026-05-10T10:00:00Z');
   const clock = { now: () => fixedNow };
 
-  let availability: { findByUserAndExam: ReturnType<typeof vi.fn>; findByUser: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
+  let availability: { findByUserAndExam: ReturnType<typeof vi.fn>; findByUser: ReturnType<typeof vi.fn>; findByExam: ReturnType<typeof vi.fn>; countAvailableForExam: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
   let exams: { findById: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; findOpenForProctor: ReturnType<typeof vi.fn>; findByPeriod: ReturnType<typeof vi.fn>; deleteById: ReturnType<typeof vi.fn> };
   let periods: { findById: ReturnType<typeof vi.fn>; findAll: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; deleteById: ReturnType<typeof vi.fn> };
   let users: { findById: ReturnType<typeof vi.fn>; findByNationalId: ReturnType<typeof vi.fn>; findAllProctors: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; deactivate: ReturnType<typeof vi.fn> };
   let useCase: SubmitAvailabilityUseCase;
 
   beforeEach(() => {
-    availability = { findByUserAndExam: vi.fn(), findByUser: vi.fn(), save: vi.fn() };
+    availability = { findByUserAndExam: vi.fn(), findByUser: vi.fn(), findByExam: vi.fn(), countAvailableForExam: vi.fn(), save: vi.fn() };
     exams = { findById: vi.fn(), save: vi.fn(), findOpenForProctor: vi.fn(), findByPeriod: vi.fn(), deleteById: vi.fn() };
     periods = { findById: vi.fn(), findAll: vi.fn(), save: vi.fn(), deleteById: vi.fn() };
     users = { findById: vi.fn(), findByNationalId: vi.fn(), findAllProctors: vi.fn(), save: vi.fn(), deactivate: vi.fn() };

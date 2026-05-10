@@ -27,7 +27,8 @@ export class User {
   public phone: string | null;
   public passwordHash: string;
   public readonly role: UserRole;
-  public readonly proctorType: ProctorType | null;
+  // Mutable through `updateProctorType` only; the role itself stays immutable.
+  private _proctorType: ProctorType | null;
   public mustChangePassword: boolean;
   public active: boolean;
   public readonly createdAt: Date;
@@ -48,11 +49,15 @@ export class User {
     this.phone = props.phone;
     this.passwordHash = props.passwordHash;
     this.role = props.role;
-    this.proctorType = props.proctorType;
+    this._proctorType = props.proctorType;
     this.mustChangePassword = props.mustChangePassword;
     this.active = props.active;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
+  }
+
+  public get proctorType(): ProctorType | null {
+    return this._proctorType;
   }
 
   public ensureCanLogin(): void {
@@ -67,11 +72,50 @@ export class User {
     this.updatedAt = now;
   }
 
+  public resetPassword(newHash: string, now: Date): void {
+    this.passwordHash = newHash;
+    this.mustChangePassword = true;
+    this.updatedAt = now;
+  }
+
+  public updateProfile(
+    patch: {
+      firstName?: string;
+      lastName?: string;
+      phone?: string | null;
+      email?: string | null;
+      proctorType?: ProctorType | null;
+    },
+    now: Date,
+  ): void {
+    if (patch.firstName !== undefined) this.firstName = patch.firstName.trim();
+    if (patch.lastName !== undefined) this.lastName = patch.lastName.trim();
+    if (patch.phone !== undefined) this.phone = patch.phone?.trim() ?? null;
+    if (patch.email !== undefined) this.email = patch.email?.trim().toLowerCase() ?? null;
+    if (patch.proctorType !== undefined) {
+      if (this.role !== UserRole.Proctor) {
+        throw new InvariantViolationError(
+          'Only proctor users can have a proctor type',
+        );
+      }
+      if (patch.proctorType === null) {
+        throw new InvariantViolationError('Proctor users must have a proctor type');
+      }
+      this._proctorType = patch.proctorType;
+    }
+    this.updatedAt = now;
+  }
+
+  public deactivate(now: Date): void {
+    this.active = false;
+    this.updatedAt = now;
+  }
+
   public isProctor(): boolean {
     return this.role === UserRole.Proctor;
   }
 
   public isOpener(): boolean {
-    return this.proctorType === ProctorType.Opener;
+    return this._proctorType === ProctorType.Opener;
   }
 }

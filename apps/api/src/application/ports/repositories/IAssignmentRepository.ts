@@ -5,6 +5,11 @@ export interface IAssignmentRepository {
   findByPeriod(periodId: string): Promise<Assignment[]>;
   findByUser(userId: string): Promise<Assignment[]>;
   /**
+   * True iff the user is currently assigned to any exam taking place on or
+   * after `fromDate` (compared as a calendar date, ignoring time of day).
+   */
+  hasFutureForUser(userId: string, fromDate: Date): Promise<boolean>;
+  /**
    * Replace all assignments for a single exam atomically. Existing rows for
    * the exam are deleted; the new collection is inserted.
    */

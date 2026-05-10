@@ -44,6 +44,17 @@ export class TypeOrmAssignmentRepository implements IAssignmentRepository {
     return rows.map(AssignmentMapper.toDomain);
   }
 
+  public async hasFutureForUser(userId: string, fromDate: Date): Promise<boolean> {
+    const isoDate = fromDate.toISOString().slice(0, 10);
+    const count = await this.repo
+      .createQueryBuilder('a')
+      .innerJoin(ExamOrmEntity, 'e', 'e.id = a.exam_id')
+      .where('(a.opener_user_id = :userId OR a.regular_user_id = :userId)', { userId })
+      .andWhere('e.exam_date >= :isoDate', { isoDate })
+      .getCount();
+    return count > 0;
+  }
+
   public async replaceForExam(examId: string, assignments: Assignment[]): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       await manager.delete(AssignmentOrmEntity, { examId });
