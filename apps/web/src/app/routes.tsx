@@ -4,6 +4,8 @@ import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ProctorHomePage } from '../features/availability/pages/ProctorHomePage';
 import { ProctorsPage } from '../features/admin/pages/ProctorsPage';
 import { ExamPeriodsPage } from '../features/admin/pages/ExamPeriodsPage';
+import { UsersPage } from '../features/admin/pages/UsersPage';
+import { AuditLogPage } from '../features/admin/pages/AuditLogPage';
 import { SchedulePage } from '../features/scheduling/pages/SchedulePage';
 import { useAppSelector } from './hooks';
 import { AppLayout } from '../shared/layouts/AppLayout';
@@ -70,6 +72,22 @@ export function AppRoutes(): JSX.Element {
           element={
             <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
               <SchedulePage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="admin/users"
+          element={
+            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+              <UsersPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="admin/audit-log"
+          element={
+            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+              <AuditLogPage />
             </RequireRole>
           }
         />

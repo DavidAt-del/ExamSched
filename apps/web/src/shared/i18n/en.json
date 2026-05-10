@@ -5,7 +5,9 @@
     "nav": {
       "calendar": "Availability",
       "proctors": "Proctors",
-      "periods": "Exam periods"
+      "periods": "Exam periods",
+      "users": "Staff users",
+      "auditLog": "Audit log"
     }
   },
   "login": {
@@ -131,6 +133,44 @@
         "noRecipients": "No proctors are assigned to this period.",
         "confirm": "Send",
         "result": "Sent: {{sent}} • Skipped: {{skipped}} • Failed: {{failed}}"
+      }
+    },
+    "users": {
+      "title": "Exam-staff users",
+      "empty": "No exam-staff users in the system.",
+      "table": {
+        "name": "Name",
+        "email": "Email",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "resetPassword": "Reset password"
+      },
+      "resetConfirm": {
+        "title": "Reset password",
+        "description": "A temporary password will be generated for {{name}}. They will be required to change it on next sign-in."
+      }
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "empty": "No entries in the selected range.",
+      "systemActor": "system",
+      "viewPayload": "Show payload",
+      "prev": "Previous",
+      "next": "Next",
+      "pageInfo": "Page {{page}} of {{totalPages}} • {{total}} entries",
+      "filters": {
+        "from": "From",
+        "to": "To",
+        "pageSize": "Page size"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "actor": "Actor",
+        "action": "Action",
+        "target": "Target",
+        "payload": "Payload"
       }
     }
   },

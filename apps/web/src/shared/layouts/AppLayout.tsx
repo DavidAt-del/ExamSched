@@ -34,6 +34,12 @@ export function AppLayout(): JSX.Element {
                   <NavLink to="/admin/periods" className={navLinkClass}>
                     {t('app.nav.periods')}
                   </NavLink>
+                  <NavLink to="/admin/users" className={navLinkClass}>
+                    {t('app.nav.users')}
+                  </NavLink>
+                  <NavLink to="/admin/audit-log" className={navLinkClass}>
+                    {t('app.nav.auditLog')}
+                  </NavLink>
                 </>
               ) : null}
             </nav>

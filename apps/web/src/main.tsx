@@ -19,3 +19,13 @@ ReactDOM.createRoot(rootEl).render(
     </Provider>
   </React.StrictMode>,
 );
+
+// Register the service worker only in production builds. The dev server
+// serves un-hashed asset paths that would cause cache mismatches.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {
+      // Silent: SW registration failure shouldn't break the app shell.
+    });
+  });
+}

@@ -228,7 +228,73 @@ For database credentials there is no secret to manage: the API authenticates to 
 ## 7. Out of scope (deferred per prompt §8)
 
 - Full constraint solver (OR-Tools). Greedy v1 in place.
-- PWA installability beyond the manifest (no service worker yet).
 - SMS notification channel (`INotificationChannel` port defined, no adapter).
 - Special-needs classroom logic (manual override path only).
-- Excel export from the staff console.
+
+## 8. Shipped state (after Phases 2 → 7)
+
+Everything below ships across PRs #1–6 and lands the project at the
+"meaningfully usable" milestone described in the original implementation
+handoff. Read this section first if you're picking up the codebase fresh.
+
+### Merged PRs
+
+| #  | Phase            | Headline                                                                |
+|----|------------------|-------------------------------------------------------------------------|
+| 1  | Bootstrap        | Workspaces, onion API, vertical slice (login + submit availability).    |
+| 2  | Review fixes     | Auth/UserMapper/UI a11y polish from Copilot review.                     |
+| 3  | Phase 2          | Admin panel: proctor + exam-period CRUD + Excel/CSV import.             |
+| 4  | Phase 3          | Scheduler engine, manual override drawer, schedule view + Excel export. |
+| 5  | Phase 4 + 5      | Notifications (`SendSchedulesUseCase` + email builder), proctor side.   |
+| 6  | Phase 6 + 7      | Audit log read view, staff password reset, retroactive audit calls,     |
+|    |                  | PWA hardening, this report update.                                      |
+
+### End-to-end flow that now works
+
+1. **Admin** creates exam-staff users and proctors (manually or via Excel
+   import) and resets passwords when needed.
+2. **Exam staff** open a period with a deadline, add exams, set
+   `classroomCount`. Closing the period locks proctors out.
+3. **Proctors** sign in (default password `123456`, forced change on
+   first login), mark availability per exam, then click `שלח` to
+   finalize. Past the deadline / closed period, finalize returns 423.
+4. **Exam staff** run the greedy scheduler, optionally override individual
+   classrooms, send the schedule (per-recipient checklist), and export to
+   `.xlsx` with one sheet per exam date (RTL-formatted).
+5. **Proctors** see the read-only "השיבוץ שלי" tab once the schedule is
+   sent, with classroom + partner name per assignment.
+6. **Anyone with admin / exam-staff role** can browse the **audit log**
+   (paginated, date-range filter) covering: proctor lifecycle events,
+   password resets, scheduler runs, manual overrides, and schedule sends.
+
+### Quality gates on `main`
+
+```bash
+npm run typecheck     # ✅ all three workspaces
+npm run lint          # ✅ incl. onion no-restricted-imports
+npm run test:unit     # ✅ 114+ API tests, 4 web tests
+npm run build         # ✅ both apps
+```
+
+### PWA
+
+- App installs from Chrome / Edge / Safari with the SVG icon and the
+  Hebrew RTL manifest.
+- `apps/web/public/service-worker.js` handles cache-first for the app
+  shell + Vite-hashed assets and network-first for `/api/*`.
+  Bump `CACHE_VERSION` in that file when shipping a breaking change.
+- One designer follow-up: drop a real `apple-touch-icon.png` (512×512)
+  into `apps/web/public/` and update the `<link rel="apple-touch-icon">`
+  in `apps/web/index.html`. The current SVG is a placeholder.
+
+### Explicit non-goals retained from the original handoff
+
+- **Admin (root) password reset path** — only proctor + exam-staff resets
+  ship; admin reset goes through a separate (out-of-scope) flow.
+- **OR-Tools / ILP scheduler** — the greedy v1 stays. Add an alternative
+  `ISchedulingEngine` adapter + DI swap when real-data fairness demands it.
+- **SMS channel** — `INotificationChannel` is defined for completeness;
+  no adapter ships.
+- **Special-needs / accommodation classrooms** — handled exclusively
+  through the manual-override drawer.
+- **Native mobile app** — covered by the PWA install path.

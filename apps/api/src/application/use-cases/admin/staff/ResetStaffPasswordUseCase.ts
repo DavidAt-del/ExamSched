@@ -1,4 +1,5 @@
 import { inject, injectable } from 'tsyringe';
+import { UserRole } from '@app/shared';
 import {
   ForbiddenError,
   NotFoundError,
@@ -21,18 +22,18 @@ import {
   type IAuditLogger,
 } from '../../../ports/services/IAuditLogger.js';
 
-export interface ResetProctorPasswordInput {
+export interface ResetStaffPasswordInput {
   actorId: string;
   userId: string;
 }
 
-export interface ResetProctorPasswordOutput {
+export interface ResetStaffPasswordOutput {
   // Returned only to the calling admin; never persist or log.
   temporaryPassword: string;
 }
 
 @injectable()
-export class ResetProctorPasswordUseCase {
+export class ResetStaffPasswordUseCase {
   constructor(
     @inject(IUserRepositoryToken) private readonly users: IUserRepository,
     @inject(IPasswordHasherToken) private readonly hasher: IPasswordHasher,
@@ -42,11 +43,13 @@ export class ResetProctorPasswordUseCase {
     @inject(IAuditLoggerToken) private readonly audit: IAuditLogger,
   ) {}
 
-  public async execute(input: ResetProctorPasswordInput): Promise<ResetProctorPasswordOutput> {
+  public async execute(input: ResetStaffPasswordInput): Promise<ResetStaffPasswordOutput> {
     const user = await this.users.findById(input.userId);
     if (!user) throw new NotFoundError('User');
-    if (!user.isProctor()) {
-      throw new ForbiddenError('Only proctor passwords can be reset through this endpoint');
+    if (user.role !== UserRole.ExamStaff) {
+      throw new ForbiddenError(
+        'Only exam-staff passwords can be reset through this endpoint',
+      );
     }
     const temp = this.tempPasswords.next(6);
     const hash = await this.hasher.hash(temp);
@@ -55,7 +58,7 @@ export class ResetProctorPasswordUseCase {
     // Never log the temporary password.
     await this.audit.log({
       actorId: input.actorId,
-      action: 'proctor.password_reset',
+      action: 'staff.password_reset',
       targetType: 'user',
       targetId: input.userId,
     });

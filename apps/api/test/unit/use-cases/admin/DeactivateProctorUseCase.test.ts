@@ -34,6 +34,7 @@ describe('DeactivateProctorUseCase', () => {
     findById: ReturnType<typeof vi.fn>;
     findByNationalId: ReturnType<typeof vi.fn>;
     findAllProctors: ReturnType<typeof vi.fn>;
+    findAllStaff: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
     deactivate: ReturnType<typeof vi.fn>;
   };
@@ -47,6 +48,7 @@ describe('DeactivateProctorUseCase', () => {
     findByExamAndClassroom: ReturnType<typeof vi.fn>;
     saveOne: ReturnType<typeof vi.fn>;
   };
+  let audit: { log: ReturnType<typeof vi.fn> };
   let useCase: DeactivateProctorUseCase;
 
   beforeEach(() => {
@@ -54,6 +56,7 @@ describe('DeactivateProctorUseCase', () => {
       findById: vi.fn(),
       findByNationalId: vi.fn(),
       findAllProctors: vi.fn(),
+      findAllStaff: vi.fn(),
       save: vi.fn(),
       deactivate: vi.fn(),
     };
@@ -67,12 +70,15 @@ describe('DeactivateProctorUseCase', () => {
       findByExamAndClassroom: vi.fn(),
       saveOne: vi.fn(),
     };
-    useCase = new DeactivateProctorUseCase(users, assignments, { now: () => fixedNow });
+    audit = { log: vi.fn() };
+    useCase = new DeactivateProctorUseCase(users, assignments, { now: () => fixedNow }, audit);
   });
 
   it('rejects unknown user with NotFound', async () => {
     users.findById.mockResolvedValue(null);
-    await expect(useCase.execute({ userId: 'x' })).rejects.toBeInstanceOf(NotFoundError);
+    await expect(useCase.execute({ actorId: 'admin', userId: 'x' })).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
   });
 
   it('rejects non-proctor users', async () => {
@@ -93,29 +99,41 @@ describe('DeactivateProctorUseCase', () => {
         updatedAt: fixedNow,
       }),
     );
-    await expect(useCase.execute({ userId: 'u' })).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(useCase.execute({ actorId: 'admin', userId: 'u' })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
   });
 
   it('is idempotent when already inactive', async () => {
     users.findById.mockResolvedValue(mkProctor({ active: false }));
-    await useCase.execute({ userId: 'u1' });
+    await useCase.execute({ actorId: 'admin', userId: 'u1' });
     expect(assignments.hasFutureForUser).not.toHaveBeenCalled();
     expect(users.deactivate).not.toHaveBeenCalled();
+    expect(audit.log).not.toHaveBeenCalled();
   });
 
   it('blocks when proctor has future assignments', async () => {
     users.findById.mockResolvedValue(mkProctor());
     assignments.hasFutureForUser.mockResolvedValue(true);
-    await expect(useCase.execute({ userId: 'u1' })).rejects.toBeInstanceOf(
-      InvariantViolationError,
-    );
+    await expect(
+      useCase.execute({ actorId: 'admin', userId: 'u1' }),
+    ).rejects.toBeInstanceOf(InvariantViolationError);
     expect(users.deactivate).not.toHaveBeenCalled();
+    expect(audit.log).not.toHaveBeenCalled();
   });
 
-  it('deactivates when no future assignments', async () => {
+  it('deactivates when no future assignments and audits the action', async () => {
     users.findById.mockResolvedValue(mkProctor());
     assignments.hasFutureForUser.mockResolvedValue(false);
-    await useCase.execute({ userId: 'u1' });
+    await useCase.execute({ actorId: 'admin', userId: 'u1' });
     expect(users.deactivate).toHaveBeenCalledWith('u1', fixedNow);
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'admin',
+        action: 'proctor.deactivated',
+        targetType: 'user',
+        targetId: 'u1',
+      }),
+    );
   });
 });

@@ -13,8 +13,13 @@ import {
   type IAssignmentRepository,
 } from '../../../ports/repositories/IAssignmentRepository.js';
 import { IClockToken, type IClock } from '../../../ports/services/IClock.js';
+import {
+  IAuditLoggerToken,
+  type IAuditLogger,
+} from '../../../ports/services/IAuditLogger.js';
 
 export interface DeactivateProctorInput {
+  actorId: string;
   userId: string;
 }
 
@@ -25,6 +30,7 @@ export class DeactivateProctorUseCase {
     @inject(IAssignmentRepositoryToken)
     private readonly assignments: IAssignmentRepository,
     @inject(IClockToken) private readonly clock: IClock,
+    @inject(IAuditLoggerToken) private readonly audit: IAuditLogger,
   ) {}
 
   public async execute(input: DeactivateProctorInput): Promise<void> {
@@ -43,5 +49,11 @@ export class DeactivateProctorUseCase {
       );
     }
     await this.users.deactivate(input.userId, now);
+    await this.audit.log({
+      actorId: input.actorId,
+      action: 'proctor.deactivated',
+      targetType: 'user',
+      targetId: input.userId,
+    });
   }
 }

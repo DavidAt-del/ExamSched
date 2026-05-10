@@ -11,6 +11,7 @@ describe('CreateProctorUseCase', () => {
 
   let users: ReturnType<typeof makeUsers>;
   let hasher: ReturnType<typeof makeHasher>;
+  let audit: { log: ReturnType<typeof vi.fn> };
   let useCase: CreateProctorUseCase;
 
   function makeUsers() {
@@ -18,6 +19,7 @@ describe('CreateProctorUseCase', () => {
       findById: vi.fn(),
       findByNationalId: vi.fn(),
       findAllProctors: vi.fn(),
+      findAllStaff: vi.fn(),
       save: vi.fn(),
       deactivate: vi.fn(),
     };
@@ -29,17 +31,20 @@ describe('CreateProctorUseCase', () => {
   beforeEach(() => {
     users = makeUsers();
     hasher = makeHasher();
+    audit = { log: vi.fn() };
     useCase = new CreateProctorUseCase(
       users,
       hasher,
       { now: () => fixedNow },
       { next: () => 'new-uuid' },
+      audit,
     );
   });
 
   it('rejects an invalid national id', async () => {
     await expect(
       useCase.execute({
+        actorId: 'admin',
         nationalId: 'not-a-id',
         firstName: 'A',
         lastName: 'B',
@@ -47,6 +52,7 @@ describe('CreateProctorUseCase', () => {
       }),
     ).rejects.toBeInstanceOf(DomainError);
     expect(users.save).not.toHaveBeenCalled();
+    expect(audit.log).not.toHaveBeenCalled();
   });
 
   it('rejects when national id already exists', async () => {
@@ -69,17 +75,20 @@ describe('CreateProctorUseCase', () => {
     );
     await expect(
       useCase.execute({
+        actorId: 'admin',
         nationalId: validId,
         firstName: 'A',
         lastName: 'B',
         proctorType: ProctorType.Opener,
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT', status: 409 });
+    expect(audit.log).not.toHaveBeenCalled();
   });
 
-  it('creates a proctor with default password "123456" and mustChangePassword=true', async () => {
+  it('creates a proctor with default password "123456" and audits the creation', async () => {
     users.findByNationalId.mockResolvedValue(null);
     const result = await useCase.execute({
+      actorId: 'admin',
       nationalId: validId,
       firstName: 'Dana ',
       lastName: ' Cohen ',
@@ -97,5 +106,14 @@ describe('CreateProctorUseCase', () => {
     expect(result.mustChangePassword).toBe(true);
     expect(result.active).toBe(true);
     expect(users.save).toHaveBeenCalledTimes(1);
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'admin',
+        action: 'proctor.created',
+        targetType: 'user',
+        targetId: result.id,
+        payload: { proctorType: ProctorType.Opener },
+      }),
+    );
   });
 });
