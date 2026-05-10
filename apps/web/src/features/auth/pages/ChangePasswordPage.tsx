@@ -12,9 +12,10 @@ import { useAppDispatch } from '../../../app/hooks';
 import { sessionEnded } from '../authSlice';
 
 // Wire-format request shape comes from @app/shared. The form adds a
-// "confirm new password" field that's validated client-side only.
-// Use a custom Zod issue code on the mismatch so the UI can distinguish it
-// from the empty-field case (z.string().min(1) emits `too_small`).
+// "confirm new password" field that's validated client-side only. Each
+// failure mode tags itself with a distinct Zod issue *message* string
+// ('required' for empty, 'mismatch' for a non-matching confirm) so the
+// UI below can pick the right translation key off `errors[…].message`.
 const FormSchema = ChangePasswordRequestSchema.extend({
   confirmPassword: z.string().min(1, 'required'),
 }).refine((v) => v.newPassword === v.confirmPassword, {
