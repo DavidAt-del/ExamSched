@@ -21,8 +21,8 @@ export interface CreateProctorInput {
   nationalId: string;
   firstName: string;
   lastName: string;
-  phone?: string | null;
-  email?: string | null;
+  phone?: string | null | undefined;
+  email?: string | null | undefined;
   proctorType: ProctorType;
 }
 

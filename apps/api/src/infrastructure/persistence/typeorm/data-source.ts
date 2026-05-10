@@ -9,6 +9,7 @@ import { AssignmentOrmEntity } from './entities/AssignmentOrmEntity.js';
 import { NotificationLogOrmEntity } from './entities/NotificationLogOrmEntity.js';
 import { AuditLogOrmEntity } from './entities/AuditLogOrmEntity.js';
 import { Init1715000000000 } from './migrations/1715000000000-Init.js';
+import { AddIndexes1716000000000 } from './migrations/1716000000000-AddIndexes.js';
 
 export function buildDataSourceOptions(
   overrides: Partial<DataSourceOptions> = {},
@@ -33,7 +34,7 @@ export function buildDataSourceOptions(
       NotificationLogOrmEntity,
       AuditLogOrmEntity,
     ],
-    migrations: [Init1715000000000],
+    migrations: [Init1715000000000, AddIndexes1716000000000],
     migrationsRun: false,
   };
   return { ...base, ...overrides } as DataSourceOptions;

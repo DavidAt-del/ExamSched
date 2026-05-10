@@ -80,11 +80,11 @@ export class User {
 
   public updateProfile(
     patch: {
-      firstName?: string;
-      lastName?: string;
-      phone?: string | null;
-      email?: string | null;
-      proctorType?: ProctorType | null;
+      firstName?: string | undefined;
+      lastName?: string | undefined;
+      phone?: string | null | undefined;
+      email?: string | null | undefined;
+      proctorType?: ProctorType | null | undefined;
     },
     now: Date,
   ): void {

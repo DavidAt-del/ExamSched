@@ -13,11 +13,11 @@ import { IClockToken, type IClock } from '../../../ports/services/IClock.js';
 export interface UpdateProctorInput {
   userId: string;
   patch: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string | null;
-    email?: string | null;
-    proctorType?: ProctorType;
+    firstName?: string | undefined;
+    lastName?: string | undefined;
+    phone?: string | null | undefined;
+    email?: string | null | undefined;
+    proctorType?: ProctorType | undefined;
   };
 }
 
