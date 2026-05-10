@@ -56,24 +56,47 @@ steps:
     args: ['run', 'test:unit']
 
   - id: test-integration
-    # Cloud Build mounts the host Docker socket only into cloud-builders/*
-    # images, so we use the pinned cloud-builders/docker (which has the
-    # daemon access Testcontainers needs) and add Node 22 via NodeSource's
-    # signed APT repo. The repo is gated by a TLS-fetched GPG key + apt's
-    # signed-by verification — no `curl | bash`. /workspace persists across
-    # steps in Cloud Build, so the `install` step's node_modules are reused;
-    # we don't re-run `npm ci` here.
+    # Cloud Build mounts the host Docker socket only into `gcr.io/cloud-builders/*`
+    # images, so we use cloud-builders/docker — the Google-maintained builder
+    # that has the daemon access Testcontainers needs. Google publishes it
+    # without per-version tags (latest is the documented consumption path); we
+    # accept that rolling-release for the builder image specifically and pin
+    # everything else (gitleaks, the gitleaks config, the NodeSource key
+    # fingerprint, our own app images) for reproducibility.
+    #
+    # Node 22 is added via NodeSource's signed APT repo — Debian's recommended
+    # pattern for third-party repos. The GPG key is fetched over TLS and then
+    # checked against the published NodeSource fingerprint before being
+    # trusted, so a compromised TLS endpoint can't silently swap it.
+    # /workspace persists across Cloud Build steps, so `install`'s node_modules
+    # are reused — no second `npm ci`.
     name: gcr.io/cloud-builders/docker
     entrypoint: bash
     args:
       - -c
       - |
         set -euo pipefail
+        # NodeSource's long-lived release-signing key, published at
+        # https://github.com/nodesource/distributions#installation-instructions.
+        # Bump deliberately when NodeSource rotates the key.
+        EXPECTED_KEY_FINGERPRINT="9FD3B784BC1C6FC31A8A0A1C1655A0AB68576280"
         apt-get update -qq
         apt-get install -qq -y --no-install-recommends ca-certificates curl gnupg
         install -m 0755 -d /etc/apt/keyrings
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-          | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+        TMP_KEY="$(mktemp)"
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "${TMP_KEY}"
+        # Verify fingerprint before trusting the key (defense against a
+        # compromised TLS endpoint or DNS hijack on deb.nodesource.com).
+        ACTUAL_FINGERPRINT="$(gpg --show-keys --with-colons --with-fingerprint "${TMP_KEY}" \
+          | awk -F: '$1 == "fpr" {print $10; exit}')"
+        if [ "${ACTUAL_FINGERPRINT}" != "${EXPECTED_KEY_FINGERPRINT}" ]; then
+          echo "NodeSource GPG key fingerprint mismatch:" >&2
+          echo "  expected: ${EXPECTED_KEY_FINGERPRINT}" >&2
+          echo "  actual:   ${ACTUAL_FINGERPRINT}" >&2
+          exit 1
+        fi
+        gpg --dearmor < "${TMP_KEY}" > /etc/apt/keyrings/nodesource.gpg
+        rm -f "${TMP_KEY}"
         echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
           > /etc/apt/sources.list.d/nodesource.list
         apt-get update -qq
