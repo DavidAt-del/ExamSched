@@ -3,14 +3,17 @@ import { z } from 'zod';
 import { container } from 'tsyringe';
 import {
   ManualOverrideRequestSchema,
+  SendSchedulesRequestSchema,
   type AssignmentDto,
   type ScheduleResultDto,
   type ScheduleViewResponse,
+  type SendSchedulesResponse,
 } from '@app/shared';
 import { RunSchedulerUseCase } from '../../../application/use-cases/scheduling/RunSchedulerUseCase.js';
 import { ManualOverrideAssignmentUseCase } from '../../../application/use-cases/scheduling/ManualOverrideAssignmentUseCase.js';
 import { ScheduleViewUseCase } from '../../../application/use-cases/scheduling/ScheduleViewUseCase.js';
 import { ExportScheduleUseCase } from '../../../application/use-cases/scheduling/ExportScheduleUseCase.js';
+import { SendSchedulesUseCase } from '../../../application/use-cases/notifications/SendSchedulesUseCase.js';
 import type { Assignment } from '../../../domain/entities/Assignment.js';
 import type { User } from '../../../domain/entities/User.js';
 
@@ -76,6 +79,13 @@ export class SchedulingController {
     const useCase = container.resolve(ScheduleViewUseCase);
     const out = await useCase.execute({ periodId });
     const body: ScheduleViewResponse = {
+      period: {
+        id: out.period.id,
+        name: out.period.name,
+        deadline: out.period.deadline.toISOString(),
+        status: out.period.status,
+        createdAt: out.period.createdAt.toISOString(),
+      },
       exams: out.exams.map(({ exam, assignments }) => ({
         id: exam.id,
         periodId: exam.periodId,
@@ -115,6 +125,20 @@ export class SchedulingController {
     );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.status(200).send(buffer);
+  }
+
+  public static async sendSchedule(req: Request, res: Response): Promise<void> {
+    const { periodId } = PeriodIdParamSchema.parse(req.params);
+    const body = SendSchedulesRequestSchema.parse(req.body ?? {});
+    const actorId = req.auth!.sub;
+    const useCase = container.resolve(SendSchedulesUseCase);
+    const result = await useCase.execute({
+      actorId,
+      periodId,
+      userIds: body.userIds,
+    });
+    const out: SendSchedulesResponse = result;
+    res.status(200).json(out);
   }
 }
 

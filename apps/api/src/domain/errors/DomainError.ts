@@ -10,7 +10,8 @@ export type DomainErrorCode =
   | 'CONFLICT'
   | 'UNAUTHENTICATED'
   | 'FORBIDDEN'
-  | 'INVARIANT_VIOLATED';
+  | 'INVARIANT_VIOLATED'
+  | 'PERIOD_LOCKED';
 
 export class DomainError extends Error {
   public readonly code: DomainErrorCode;
@@ -63,5 +64,12 @@ export class InvariantViolationError extends DomainError {
   constructor(message: string) {
     super('INVARIANT_VIOLATED', message, 422);
     this.name = 'InvariantViolationError';
+  }
+}
+
+export class PeriodLockedError extends DomainError {
+  constructor(message = 'The exam period is no longer accepting changes') {
+    super('PERIOD_LOCKED', message, 423);
+    this.name = 'PeriodLockedError';
   }
 }

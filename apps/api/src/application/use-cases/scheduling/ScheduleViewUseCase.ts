@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import type { Exam } from '../../../domain/entities/Exam.js';
 import type { Assignment } from '../../../domain/entities/Assignment.js';
+import type { ExamPeriod } from '../../../domain/entities/ExamPeriod.js';
 import type { User } from '../../../domain/entities/User.js';
 import { NotFoundError } from '../../../domain/errors/DomainError.js';
 import {
@@ -30,6 +31,7 @@ export interface ScheduleViewExam {
 }
 
 export interface ScheduleViewOutput {
+  period: ExamPeriod;
   exams: ScheduleViewExam[];
   /** Indexed by user id; only contains users that appear in assignments. */
   users: Map<string, User>;
@@ -76,6 +78,7 @@ export class ScheduleViewUseCase {
     );
 
     return {
+      period,
       exams: exams.map((exam) => ({
         exam,
         assignments: (byExam.get(exam.id) ?? []).sort(

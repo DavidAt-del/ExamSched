@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExamDtoSchema } from './admin.js';
+import { ExamDtoSchema, ExamPeriodDtoSchema } from './admin.js';
 
 // Run scheduler — body is empty; periodId comes from the URL path.
 export const RunSchedulerRequestSchema = z.object({}).strict();
@@ -50,6 +50,9 @@ export const ScheduleViewExamDtoSchema = ExamDtoSchema.extend({
 export type ScheduleViewExamDto = z.infer<typeof ScheduleViewExamDtoSchema>;
 
 export const ScheduleViewResponseSchema = z.object({
+  // Period meta surfaced so the schedule UI can gate the Send button on
+  // status === 'scheduled' and show a "sent" badge once dispatched.
+  period: ExamPeriodDtoSchema,
   exams: z.array(ScheduleViewExamDtoSchema),
 });
 export type ScheduleViewResponse = z.infer<typeof ScheduleViewResponseSchema>;
