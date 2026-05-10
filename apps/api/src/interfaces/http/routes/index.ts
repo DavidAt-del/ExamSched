@@ -4,6 +4,7 @@ import { UserRole } from '@app/shared';
 import { AuthController } from '../controllers/AuthController.js';
 import { AvailabilityController } from '../controllers/AvailabilityController.js';
 import { AdminController } from '../controllers/AdminController.js';
+import { SchedulingController } from '../controllers/SchedulingController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
 // 10 MB cap for the proctor-import upload. Stored in memory; the request is
@@ -59,6 +60,18 @@ export function buildRouter(): Router {
   admin.post('/periods/:periodId/exams', wrap(AdminController.createExam));
   admin.get('/periods/:periodId/exams', wrap(AdminController.listExams));
   admin.delete('/periods/:periodId/exams/:id', wrap(AdminController.deleteExam));
+
+  // ── Scheduling ─────────────────────────────────────────────────────────
+  admin.post('/periods/:periodId/schedule', wrap(SchedulingController.run));
+  admin.get('/periods/:periodId/schedule', wrap(SchedulingController.view));
+  admin.get(
+    '/periods/:periodId/schedule/export',
+    wrap(SchedulingController.exportSchedule),
+  );
+  admin.patch(
+    '/exams/:examId/classrooms/:idx',
+    wrap(SchedulingController.manualOverride),
+  );
 
   router.use('/admin', admin);
 

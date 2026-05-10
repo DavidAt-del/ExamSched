@@ -29,3 +29,14 @@ export type {
   ResetPasswordResponse,
   ImportProctorsResult,
 } from '../schemas/admin.js';
+
+export type {
+  RunSchedulerRequest,
+  ProctorRef,
+  AssignmentDto,
+  UnfilledClassroom,
+  ScheduleResultDto,
+  ManualOverrideRequest,
+  ScheduleViewExamDto,
+  ScheduleViewResponse,
+} from '../schemas/scheduling.js';

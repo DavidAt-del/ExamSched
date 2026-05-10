@@ -2,27 +2,19 @@ import { injectable } from 'tsyringe';
 import { ProctorType } from '@app/shared';
 import { Assignment } from '../../domain/entities/Assignment.js';
 import type { Proctor } from '../../domain/entities/Proctor.js';
-import type { Exam } from '../../domain/entities/Exam.js';
 import { SchedulerDomainService } from '../../domain/services/SchedulerDomainService.js';
 import { InvariantViolationError } from '../../domain/errors/DomainError.js';
-
-export interface SchedulingInput {
-  exam: Exam;
-  availableProctors: Proctor[];
-  shiftsByProctor: Map<string, number>;
-  assignmentIds: () => string;
-}
-
-export interface SchedulingResult {
-  assignments: Assignment[];
-  unfilledClassrooms: number[];
-}
+import type {
+  ISchedulingEngine,
+  SchedulingInput,
+  SchedulingResult,
+} from '../../application/ports/services/ISchedulingEngine.js';
 
 // V1 greedy: prefer (opener, regular) pairs, fall back to (opener, opener), then
 // solo opener, balancing by current shifts-per-proctor count. Returns unfilled
 // classroom indices when there isn't enough coverage.
 @injectable()
-export class GreedySchedulingEngine {
+export class GreedySchedulingEngine implements ISchedulingEngine {
   public schedule(input: SchedulingInput): SchedulingResult {
     const openers = input.availableProctors
       .filter((p) => p.proctorType === ProctorType.Opener)

@@ -68,6 +68,37 @@ export class TypeOrmAssignmentRepository implements IAssignmentRepository {
     });
   }
 
+  public async replaceForPeriod(periodId: string, assignments: Assignment[]): Promise<void> {
+    // Wipe every classroom assignment under the period, then bulk-insert the
+    // new schedule. Single transaction so a re-run is all-or-nothing.
+    await this.dataSource.transaction(async (manager) => {
+      await manager
+        .createQueryBuilder()
+        .delete()
+        .from(AssignmentOrmEntity)
+        .where(
+          'exam_id IN (SELECT id FROM exams WHERE period_id = :periodId)',
+          { periodId },
+        )
+        .execute();
+      if (assignments.length === 0) return;
+      const rows = assignments.map((a) => {
+        const row = new AssignmentOrmEntity();
+        AssignmentMapper.toOrm(a, row);
+        return row;
+      });
+      await manager.save(AssignmentOrmEntity, rows);
+    });
+  }
+
+  public async findByExamAndClassroom(
+    examId: string,
+    classroomIndex: number,
+  ): Promise<Assignment | null> {
+    const row = await this.repo.findOne({ where: { examId, classroomIndex } });
+    return row ? AssignmentMapper.toDomain(row) : null;
+  }
+
   public async saveOne(assignment: Assignment): Promise<void> {
     const existing = await this.repo.findOne({ where: { id: assignment.id } });
     const target = existing ?? this.repo.create();

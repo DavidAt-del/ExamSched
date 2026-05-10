@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -65,6 +66,12 @@ export function ExamPeriodsPage(): JSX.Element {
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={p.status} />
+                <Link
+                  to={`/admin/periods/${p.id}/schedule`}
+                  className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white hover:bg-slate-700"
+                >
+                  {t('admin.periods.openSchedule')}
+                </Link>
                 {p.status === ExamPeriodStatus.Open ? (
                   <button
                     type="button"

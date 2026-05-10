@@ -43,6 +43,8 @@ describe('DeactivateProctorUseCase', () => {
     findByUser: ReturnType<typeof vi.fn>;
     hasFutureForUser: ReturnType<typeof vi.fn>;
     replaceForExam: ReturnType<typeof vi.fn>;
+    replaceForPeriod: ReturnType<typeof vi.fn>;
+    findByExamAndClassroom: ReturnType<typeof vi.fn>;
     saveOne: ReturnType<typeof vi.fn>;
   };
   let useCase: DeactivateProctorUseCase;
@@ -61,6 +63,8 @@ describe('DeactivateProctorUseCase', () => {
       findByUser: vi.fn(),
       hasFutureForUser: vi.fn(),
       replaceForExam: vi.fn(),
+      replaceForPeriod: vi.fn(),
+      findByExamAndClassroom: vi.fn(),
       saveOne: vi.fn(),
     };
     useCase = new DeactivateProctorUseCase(users, assignments, { now: () => fixedNow });
