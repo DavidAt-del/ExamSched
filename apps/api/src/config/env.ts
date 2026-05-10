@@ -13,6 +13,10 @@ const EnvSchema = z.object({
   DB_NAME: z.string().default('proctor_scheduler'),
   // When set, the API uses Cloud SQL Connector + IAM auth (no password).
   CLOUD_SQL_INSTANCE: z.string().optional(),
+  RUN_MIGRATIONS_ONLY: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 
   // Auth
   JWT_SECRET: z.string().min(16).default('dev-only-secret-change-me-please-1234'),

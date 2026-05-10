@@ -33,6 +33,12 @@ async function bootstrap(): Promise<void> {
   await dataSource.runMigrations({ transaction: 'all' });
   log.info('Database initialized and migrations applied');
 
+  if (env.RUN_MIGRATIONS_ONLY) {
+    await dataSource.destroy();
+    log.info('RUN_MIGRATIONS_ONLY is enabled; exiting after migrations');
+    return;
+  }
+
   registerDependencies(dataSource);
 
   const app = buildApp();
