@@ -54,18 +54,14 @@ steps:
     args: ['run', 'test:unit']
 
   - id: test-integration
-    # Testcontainers needs Docker socket access. The cloud-builders/docker
-    # image has the daemon proxied to /var/run/docker.sock automatically.
-    name: gcr.io/cloud-builders/docker
+    # Reuse the dependencies installed in /workspace by the `install` step.
+    # This avoids installing Node via a remote script and keeps the step on
+    # the same pinned major Node version used elsewhere in the pipeline.
+    name: node:22
     entrypoint: bash
     args:
       - -c
       - |
-        # Reinstall — each step starts with a clean filesystem.
-        apt-get update -qq && apt-get install -qq -y curl ca-certificates
-        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-        apt-get install -qq -y nodejs
-        npm ci --workspaces --include-workspace-root --no-audit --no-fund
         npm run test:integration --workspace @app/api
 
   - id: build-api-image
