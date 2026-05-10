@@ -123,7 +123,42 @@
         "regular": "Regular",
         "regularNone": "No regular",
         "notes": "Notes"
+      },
+      "send": {
+        "button": "Send schedule",
+        "title": "Send the schedule",
+        "description": "Choose which proctors will receive the schedule by email. By default everyone is selected.",
+        "noRecipients": "No proctors are assigned to this period.",
+        "confirm": "Send",
+        "result": "Sent: {{sent}} • Skipped: {{skipped}} • Failed: {{failed}}"
       }
+    }
+  },
+  "proctor": {
+    "tabs": {
+      "availability": "Availability",
+      "schedule": "My schedule"
+    },
+    "periodLocked": "This period is no longer accepting availability changes.",
+    "selectedDates": {
+      "title": "My selected dates",
+      "empty": "You have not marked availability for any exams in this period."
+    },
+    "submit": {
+      "button": "Submit",
+      "thanks": "Thanks — please wait for the exam department to publish the schedule.",
+      "lockedError": "The period is closed — submission is no longer possible.",
+      "confirm": {
+        "title": "Submit availability",
+        "description": "Once submitted you can no longer change your availability for this period. Continue?"
+      }
+    },
+    "mySchedule": {
+      "empty": "No assignments yet. You'll be notified once the exam department publishes the schedule.",
+      "opener": "Opener",
+      "regular": "Regular",
+      "noPartner": "No partner",
+      "classroom": "Classroom {{n}}"
     }
   }
 }

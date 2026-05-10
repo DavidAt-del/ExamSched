@@ -10,7 +10,6 @@ export type {
   SubmitAvailabilityRequest,
   AvailabilityDto,
   ExamSummaryDto,
-  ListExamsResponse,
 } from '../schemas/availability.js';
 
 export type { ErrorResponse } from '../schemas/errors.js';
@@ -40,3 +39,16 @@ export type {
   ScheduleViewExamDto,
   ScheduleViewResponse,
 } from '../schemas/scheduling.js';
+
+export type {
+  SendSchedulesRequest,
+  SendSchedulesResponse,
+} from '../schemas/notifications.js';
+
+export type {
+  MyPeriodDto,
+  MyPeriodsResponse,
+  MyAssignmentDto,
+  MyScheduleResponse,
+  FinalizeAvailabilityResponse,
+} from '../schemas/proctor.js';

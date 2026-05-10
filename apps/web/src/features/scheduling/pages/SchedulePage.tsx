@@ -7,13 +7,14 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import heLocale from '@fullcalendar/core/locales/he';
 import enLocale from '@fullcalendar/core/locales/en-gb';
-import type { AssignmentDto, ScheduleViewExamDto } from '@app/shared';
+import { ExamPeriodStatus, type AssignmentDto, type ScheduleViewExamDto } from '@app/shared';
 import {
   useGetScheduleQuery,
   useRunSchedulerMutation,
 } from '../schedulingApi';
 import { ConfirmDialog } from '../../../shared/ui/ConfirmDialog';
 import { ManualOverrideDrawer } from '../components/ManualOverrideDrawer';
+import { SendScheduleModal } from '../components/SendScheduleModal';
 
 interface ClassroomEvent {
   id: string;
@@ -56,6 +57,7 @@ export function SchedulePage(): JSX.Element {
   });
   const [runScheduler, runState] = useRunSchedulerMutation();
   const [confirmRun, setConfirmRun] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   const [drawerTarget, setDrawerTarget] = useState<{
     examId: string;
     classroomIndex: number;
@@ -97,7 +99,14 @@ export function SchedulePage(): JSX.Element {
   return (
     <main className="mx-auto max-w-6xl p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold">{t('admin.scheduling.title')}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold">{t('admin.scheduling.title')}</h1>
+          {data?.period.status === ExamPeriodStatus.Sent ? (
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
+              {t('admin.periods.status.sent')}
+            </span>
+          ) : null}
+        </div>
         <div className="flex gap-2">
           <button
             type="button"
@@ -105,6 +114,14 @@ export function SchedulePage(): JSX.Element {
             className="rounded bg-slate-900 px-3 py-1.5 text-white hover:bg-slate-700"
           >
             {t('admin.scheduling.run')}
+          </button>
+          <button
+            type="button"
+            disabled={data?.period.status !== ExamPeriodStatus.Scheduled}
+            onClick={() => setSendOpen(true)}
+            className="rounded bg-emerald-600 px-3 py-1.5 text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {t('admin.scheduling.send.button')}
           </button>
           <a
             href={exportHref}
@@ -170,6 +187,17 @@ export function SchedulePage(): JSX.Element {
           current={drawerTarget.current}
           onClose={() => {
             setDrawerTarget(null);
+            void refetch();
+          }}
+        />
+      ) : null}
+
+      {sendOpen && data ? (
+        <SendScheduleModal
+          periodId={periodId}
+          schedule={data}
+          onClose={() => {
+            setSendOpen(false);
             void refetch();
           }}
         />

@@ -15,6 +15,8 @@ export const AvailabilityDtoSchema = z.object({
 });
 export type AvailabilityDto = z.infer<typeof AvailabilityDtoSchema>;
 
+// Per-exam summary for a single proctor. Used inside the period-grouped
+// MyPeriodsResponse (see schemas/proctor.ts).
 export const ExamSummaryDtoSchema = z.object({
   id: z.string().uuid(),
   periodId: z.string().uuid(),
@@ -25,8 +27,3 @@ export const ExamSummaryDtoSchema = z.object({
   myAvailability: z.boolean().nullable(),
 });
 export type ExamSummaryDto = z.infer<typeof ExamSummaryDtoSchema>;
-
-export const ListExamsResponseSchema = z.object({
-  exams: z.array(ExamSummaryDtoSchema),
-});
-export type ListExamsResponse = z.infer<typeof ListExamsResponseSchema>;

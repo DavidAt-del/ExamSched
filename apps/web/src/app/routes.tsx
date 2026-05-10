@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { UserRole } from '@app/shared';
 import { LoginPage } from '../features/auth/pages/LoginPage';
-import { ProctorCalendarPage } from '../features/availability/pages/ProctorCalendarPage';
+import { ProctorHomePage } from '../features/availability/pages/ProctorHomePage';
 import { ProctorsPage } from '../features/admin/pages/ProctorsPage';
 import { ExamPeriodsPage } from '../features/admin/pages/ExamPeriodsPage';
 import { SchedulePage } from '../features/scheduling/pages/SchedulePage';
@@ -48,7 +48,7 @@ export function AppRoutes(): JSX.Element {
         }
       >
         <Route index element={<HomeRedirect />} />
-        <Route path="calendar" element={<ProctorCalendarPage />} />
+        <Route path="calendar" element={<ProctorHomePage />} />
         <Route
           path="admin/proctors"
           element={

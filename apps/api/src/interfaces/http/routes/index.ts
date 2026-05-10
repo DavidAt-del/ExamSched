@@ -5,6 +5,7 @@ import { AuthController } from '../controllers/AuthController.js';
 import { AvailabilityController } from '../controllers/AvailabilityController.js';
 import { AdminController } from '../controllers/AdminController.js';
 import { SchedulingController } from '../controllers/SchedulingController.js';
+import { ProctorController } from '../controllers/ProctorController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
 // 10 MB cap for the proctor-import upload. Stored in memory; the request is
@@ -29,17 +30,23 @@ export function buildRouter(): Router {
   router.post('/auth/change-password', authenticate(), wrap(AuthController.changePassword));
 
   // ── Proctor self-service ────────────────────────────────────────────────
-  router.get(
-    '/exams/mine',
-    authenticate(),
-    requireRole(UserRole.Proctor),
-    wrap(AvailabilityController.listExams),
-  );
+  const proctor = Router();
+  proctor.use(authenticate(), requireRole(UserRole.Proctor));
+  proctor.get('/my-periods', wrap(ProctorController.myPeriods));
+  proctor.get('/my-schedule', wrap(ProctorController.mySchedule));
+  router.use('/proctor', proctor);
+
   router.post(
     '/availability',
     authenticate(),
     requireRole(UserRole.Proctor),
     wrap(AvailabilityController.submit),
+  );
+  router.post(
+    '/availability/finalize/:periodId',
+    authenticate(),
+    requireRole(UserRole.Proctor),
+    wrap(ProctorController.finalize),
   );
 
   // ── Admin ──────────────────────────────────────────────────────────────
@@ -67,6 +74,10 @@ export function buildRouter(): Router {
   admin.get(
     '/periods/:periodId/schedule/export',
     wrap(SchedulingController.exportSchedule),
+  );
+  admin.post(
+    '/periods/:periodId/send-schedule',
+    wrap(SchedulingController.sendSchedule),
   );
   admin.patch(
     '/exams/:examId/classrooms/:idx',

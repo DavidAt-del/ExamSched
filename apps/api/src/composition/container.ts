@@ -13,18 +13,22 @@ import { IProctorRowParserToken } from '../application/ports/services/IProctorRo
 import { IAuditLoggerToken } from '../application/ports/services/IAuditLogger.js';
 import { IScheduleExporterToken } from '../application/ports/services/IScheduleExporter.js';
 import { ISchedulingEngineToken } from '../application/ports/services/ISchedulingEngine.js';
+import { IScheduleEmailBuilderToken } from '../application/ports/services/IScheduleEmailBuilder.js';
 
 import { IUserRepositoryToken } from '../application/ports/repositories/IUserRepository.js';
 import { IExamRepositoryToken } from '../application/ports/repositories/IExamRepository.js';
 import { IExamPeriodRepositoryToken } from '../application/ports/repositories/IExamPeriodRepository.js';
 import { IAvailabilityRepositoryToken } from '../application/ports/repositories/IAvailabilityRepository.js';
 import { IAssignmentRepositoryToken } from '../application/ports/repositories/IAssignmentRepository.js';
+import { INotificationLogRepositoryToken } from '../application/ports/repositories/INotificationLogRepository.js';
+import { IAvailabilitySubmissionRepositoryToken } from '../application/ports/repositories/IAvailabilitySubmissionRepository.js';
 
 import { SystemClock } from '../infrastructure/system/SystemClock.js';
 import { UuidIdGenerator } from '../infrastructure/system/UuidIdGenerator.js';
 import { CryptoTempPasswordGenerator } from '../infrastructure/system/CryptoTempPasswordGenerator.js';
 import { ExcelProctorRowParser } from '../infrastructure/excel/ExcelProctorRowParser.js';
 import { ExcelScheduleExporter } from '../infrastructure/excel/ExcelScheduleExporter.js';
+import { ScheduleEmailBuilder } from '../infrastructure/email/ScheduleEmailBuilder.js';
 import { PostgresAuditLogger } from '../infrastructure/audit/PostgresAuditLogger.js';
 import { GreedySchedulingEngine } from '../infrastructure/scheduler/GreedySchedulingEngine.js';
 import { BcryptPasswordHasher } from '../infrastructure/auth/BcryptPasswordHasher.js';
@@ -38,6 +42,8 @@ import { TypeOrmExamRepository } from '../infrastructure/persistence/typeorm/rep
 import { TypeOrmExamPeriodRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmExamPeriodRepository.js';
 import { TypeOrmAvailabilityRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmAvailabilityRepository.js';
 import { TypeOrmAssignmentRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmAssignmentRepository.js';
+import { TypeOrmNotificationLogRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmNotificationLogRepository.js';
+import { TypeOrmAvailabilitySubmissionRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmAvailabilitySubmissionRepository.js';
 
 export function registerDependencies(dataSource: DataSource): void {
   const env = loadEnv();
@@ -77,10 +83,17 @@ export function registerDependencies(dataSource: DataSource): void {
   container.register(IAssignmentRepositoryToken, {
     useValue: new TypeOrmAssignmentRepository(dataSource),
   });
+  container.register(INotificationLogRepositoryToken, {
+    useValue: new TypeOrmNotificationLogRepository(dataSource),
+  });
+  container.register(IAvailabilitySubmissionRepositoryToken, {
+    useValue: new TypeOrmAvailabilitySubmissionRepository(dataSource),
+  });
 
-  // Scheduling adapters.
+  // Scheduling + notification adapters.
   container.register(ISchedulingEngineToken, { useClass: GreedySchedulingEngine });
   container.register(IScheduleExporterToken, { useClass: ExcelScheduleExporter });
+  container.register(IScheduleEmailBuilderToken, { useClass: ScheduleEmailBuilder });
   container.register(IAuditLoggerToken, {
     useValue: new PostgresAuditLogger(dataSource),
   });
