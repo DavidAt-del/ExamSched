@@ -12,6 +12,9 @@ FROM deps AS build
 COPY packages/shared ./packages/shared
 COPY apps/web ./apps/web
 RUN npm --workspace @app/shared run build
+# `npm ci --ignore-scripts` above skipped sharp's postinstall, which downloads
+# the platform-specific native binary. Run rebuild now that we know we want it.
+RUN npm --workspace @app/web rebuild sharp
 RUN npm --workspace @app/web run build
 
 FROM nginx:1.27-alpine AS runtime

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { UserRole } from '@app/shared';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ChangePasswordPage } from '../features/auth/pages/ChangePasswordPage';
@@ -13,7 +13,15 @@ import { AppLayout } from '../shared/layouts/AppLayout';
 
 function RequireAuth({ children }: { children: JSX.Element }): JSX.Element {
   const token = useAppSelector((s) => s.auth.token);
+  const user = useAppSelector((s) => s.auth.user);
+  const location = useLocation();
   if (!token) return <Navigate to="/login" replace />;
+  // Force the change-password flow when the JWT carried mustChangePassword=true.
+  // Without this guard, a user with a temp password could navigate directly to
+  // protected routes after login and bypass the spec-mandated reset.
+  if (user?.mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
+  }
   return children;
 }
 

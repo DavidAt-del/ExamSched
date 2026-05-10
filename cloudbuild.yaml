@@ -29,7 +29,9 @@ steps:
   - id: secret-scan
     # Working-tree scan (--no-git): Cloud Build's checkout has no git history.
     # Add allowlist entries to .gitleaks.toml for known-safe placeholders.
-    name: zricethezav/gitleaks:latest
+    # Pinned to a release tag for reproducibility — bump deliberately when
+    # rolling forward, never use `:latest` in CI.
+    name: zricethezav/gitleaks:v8.21.2
     entrypoint: gitleaks
     args:
       - detect
@@ -54,14 +56,28 @@ steps:
     args: ['run', 'test:unit']
 
   - id: test-integration
-    # Reuse the dependencies installed in /workspace by the `install` step.
-    # This avoids installing Node via a remote script and keeps the step on
-    # the same pinned major Node version used elsewhere in the pipeline.
-    name: node:22
+    # Cloud Build mounts the host Docker socket only into cloud-builders/*
+    # images, so we use the pinned cloud-builders/docker (which has the
+    # daemon access Testcontainers needs) and add Node 22 via NodeSource's
+    # signed APT repo. The repo is gated by a TLS-fetched GPG key + apt's
+    # signed-by verification — no `curl | bash`. /workspace persists across
+    # steps in Cloud Build, so the `install` step's node_modules are reused;
+    # we don't re-run `npm ci` here.
+    name: gcr.io/cloud-builders/docker
     entrypoint: bash
     args:
       - -c
       - |
+        set -euo pipefail
+        apt-get update -qq
+        apt-get install -qq -y --no-install-recommends ca-certificates curl gnupg
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+          | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+          > /etc/apt/sources.list.d/nodesource.list
+        apt-get update -qq
+        apt-get install -qq -y --no-install-recommends nodejs
         npm run test:integration --workspace @app/api
 
   - id: build-api-image

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
@@ -14,8 +13,10 @@ import { sessionEnded } from '../authSlice';
 
 // Wire-format request shape comes from @app/shared. The form adds a
 // "confirm new password" field that's validated client-side only.
+// Use a custom Zod issue code on the mismatch so the UI can distinguish it
+// from the empty-field case (z.string().min(1) emits `too_small`).
 const FormSchema = ChangePasswordRequestSchema.extend({
-  confirmPassword: z.string().min(1),
+  confirmPassword: z.string().min(1, 'required'),
 }).refine((v) => v.newPassword === v.confirmPassword, {
   message: 'mismatch',
   path: ['confirmPassword'],
@@ -27,7 +28,6 @@ export function ChangePasswordPage(): JSX.Element {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [changePassword, { isLoading, error }] = useChangePasswordMutation();
-  const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
@@ -44,31 +44,29 @@ export function ChangePasswordPage(): JSX.Element {
       newPassword: values.newPassword,
     };
     await changePassword(payload).unwrap();
-    setSubmitted(true);
     // Force a clean re-login so the JWT's mustChangePassword claim is rotated.
     dispatch(sessionEnded());
     navigate('/login', { replace: true });
   };
 
-  // 401 from the API = wrong current password.
+  // RTK Query's fetchBaseQuery surfaces non-numeric statuses for transport
+  // errors (e.g. 'FETCH_ERROR'); fall back to a generic message in that case.
   const status =
     error && 'status' in error && typeof error.status === 'number' ? error.status : null;
   const serverError =
-    status === 401
-      ? t('auth.changePassword.errors.invalidCurrent')
-      : error
-        ? t('common.error')
-        : null;
+    error === undefined || error === null
+      ? null
+      : status === 401
+        ? t('auth.changePassword.errors.invalidCurrent')
+        : t('common.error');
 
-  if (submitted) {
-    return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4">
-        <p className="rounded border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
-          {t('auth.changePassword.success')}
-        </p>
-      </main>
-    );
-  }
+  // Map the confirm field's two distinct issues to two distinct strings.
+  const confirmError =
+    errors.confirmPassword?.message === 'mismatch'
+      ? t('auth.changePassword.errors.mismatch')
+      : errors.confirmPassword
+        ? t('login.errors.required')
+        : null;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4">
@@ -102,7 +100,7 @@ export function ChangePasswordPage(): JSX.Element {
 
         <Field
           label={t('auth.changePassword.confirmPassword')}
-          error={errors.confirmPassword ? t('auth.changePassword.errors.mismatch') : null}
+          error={confirmError}
         >
           <input
             type="password"

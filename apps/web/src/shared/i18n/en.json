@@ -29,7 +29,6 @@
       "newPassword": "New password",
       "confirmPassword": "Confirm new password",
       "submit": "Save",
-      "success": "Password changed. Please sign in with your new password.",
       "errors": {
         "invalidCurrent": "Current password is incorrect.",
         "tooShort": "Password must be at least 6 characters.",
