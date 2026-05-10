@@ -1,7 +1,12 @@
 {
   "app": {
     "title": "Proctor Scheduler",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "nav": {
+      "calendar": "Availability",
+      "proctors": "Proctors",
+      "periods": "Exam periods"
+    }
   },
   "login": {
     "heading": "Sign in",
@@ -29,6 +34,78 @@
     "yes": "Yes",
     "no": "No",
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "admin": {
+    "proctors": {
+      "title": "Proctor management",
+      "addProctor": "Add proctor",
+      "import": "Import from file",
+      "table": {
+        "nationalId": "National ID",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "type": "Type",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "type": {
+        "opener": "Opener",
+        "regular": "Regular"
+      },
+      "actions": {
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "resetPassword": "Reset password"
+      },
+      "form": {
+        "firstName": "First name",
+        "lastName": "Last name",
+        "phone": "Phone",
+        "email": "Email",
+        "type": "Proctor type"
+      },
+      "deactivateConfirm": {
+        "title": "Deactivate proctor",
+        "description": "The proctor will no longer be able to sign in or be assigned to future exams. Existing data is retained for the audit log."
+      },
+      "resetPasswordResult": "Temporary password: {{password}}"
+    },
+    "periods": {
+      "title": "Exam periods",
+      "addPeriod": "New period",
+      "deadline": "Availability deadline",
+      "name": "Period name",
+      "status": {
+        "open": "Open",
+        "closed": "Closed",
+        "scheduled": "Scheduled",
+        "sent": "Sent"
+      },
+      "closeConfirm": {
+        "title": "Close period",
+        "description": "Once closed, no further exams can be added and proctors can no longer update their availability."
+      },
+      "exams": {
+        "title": "Exams in period",
+        "addExam": "Add exam",
+        "examDate": "Date",
+        "startTime": "Start time",
+        "endTime": "End time",
+        "classroomCount": "Classroom count",
+        "deleteConfirm": {
+          "title": "Delete exam",
+          "description": "Exams can only be deleted from an open period that has no proctor responses yet."
+        }
+      }
+    }
   }
 }

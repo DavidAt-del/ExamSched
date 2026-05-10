@@ -1,7 +1,12 @@
 {
   "app": {
     "title": "שיבוץ משגיחים",
-    "logout": "התנתקות"
+    "logout": "התנתקות",
+    "nav": {
+      "calendar": "לוח זמינות",
+      "proctors": "משגיחים",
+      "periods": "תקופות בחינה"
+    }
   },
   "login": {
     "heading": "התחברות",
@@ -29,6 +34,78 @@
     "yes": "כן",
     "no": "לא",
     "cancel": "ביטול",
-    "confirm": "אישור"
+    "confirm": "אישור",
+    "save": "שמירה",
+    "delete": "מחיקה",
+    "edit": "עריכה",
+    "create": "יצירה",
+    "close": "סגירה",
+    "active": "פעיל",
+    "inactive": "לא פעיל"
+  },
+  "admin": {
+    "proctors": {
+      "title": "ניהול משגיחים",
+      "addProctor": "הוסף משגיח",
+      "import": "ייבוא מקובץ",
+      "table": {
+        "nationalId": "תעודת זהות",
+        "name": "שם",
+        "phone": "טלפון",
+        "email": "דואל",
+        "type": "סוג",
+        "status": "סטטוס",
+        "actions": "פעולות"
+      },
+      "type": {
+        "opener": "פותח כיתה",
+        "regular": "משגיח רגיל"
+      },
+      "actions": {
+        "edit": "עריכה",
+        "deactivate": "השבתה",
+        "resetPassword": "איפוס סיסמה"
+      },
+      "form": {
+        "firstName": "שם פרטי",
+        "lastName": "שם משפחה",
+        "phone": "טלפון",
+        "email": "דואל",
+        "type": "סוג משגיח"
+      },
+      "deactivateConfirm": {
+        "title": "השבתת משגיח",
+        "description": "המשגיח לא יוכל יותר להתחבר ולא ישובץ לבחינות עתידיות. הנתונים יישמרו לתיעוד."
+      },
+      "resetPasswordResult": "סיסמה זמנית: {{password}}"
+    },
+    "periods": {
+      "title": "תקופות בחינה",
+      "addPeriod": "תקופה חדשה",
+      "deadline": "תאריך אחרון לעדכון זמינות",
+      "name": "שם התקופה",
+      "status": {
+        "open": "פתוח",
+        "closed": "סגור",
+        "scheduled": "שובץ",
+        "sent": "נשלח"
+      },
+      "closeConfirm": {
+        "title": "סגירת תקופה",
+        "description": "לאחר הסגירה לא ניתן יהיה להוסיף בחינות או לקבל עדכוני זמינות מהמשגיחים."
+      },
+      "exams": {
+        "title": "בחינות בתקופה",
+        "addExam": "הוסף בחינה",
+        "examDate": "תאריך",
+        "startTime": "שעת התחלה",
+        "endTime": "שעת סיום",
+        "classroomCount": "מספר כיתות",
+        "deleteConfirm": {
+          "title": "מחיקת בחינה",
+          "description": "ניתן למחוק רק בחינות בתקופה פתוחה ללא תגובות מהמשגיחים."
+        }
+      }
+    }
   }
 }

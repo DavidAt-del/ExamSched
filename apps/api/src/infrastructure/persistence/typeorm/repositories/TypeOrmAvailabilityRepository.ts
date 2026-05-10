@@ -23,6 +23,19 @@ export class TypeOrmAvailabilityRepository implements IAvailabilityRepository {
     return rows.map(AvailabilityMapper.toDomain);
   }
 
+  public async findByExam(examId: string): Promise<Availability[]> {
+    const rows = await this.repo.find({ where: { examId } });
+    return rows.map(AvailabilityMapper.toDomain);
+  }
+
+  public async countAvailableForExam(examId: string): Promise<number> {
+    return this.repo
+      .createQueryBuilder('a')
+      .where('a.exam_id = :examId', { examId })
+      .andWhere('a.available = true')
+      .getCount();
+  }
+
   public async save(availability: Availability): Promise<void> {
     const existing = await this.repo.findOne({ where: { id: availability.id } });
     const target = existing ?? this.repo.create();
