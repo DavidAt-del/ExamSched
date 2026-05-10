@@ -1,0 +1,34 @@
+{
+  "app": {
+    "title": "שיבוץ משגיחים",
+    "logout": "התנתקות"
+  },
+  "login": {
+    "heading": "התחברות",
+    "nationalId": "תעודת זהות",
+    "password": "סיסמה",
+    "submit": "כניסה",
+    "errors": {
+      "invalidCredentials": "תעודת זהות או סיסמה שגויים",
+      "required": "שדה חובה",
+      "nationalIdInvalid": "תעודת זהות חייבת להכיל 9 ספרות"
+    }
+  },
+  "calendar": {
+    "heading": "זמינות לבחינות",
+    "available": "זמין",
+    "unavailable": "לא זמין",
+    "save": "שמירה",
+    "savedAt": "נשמר ב-{{time}}",
+    "noExams": "אין בחינות בתקופה זו",
+    "classroomCount": "{{count}} כיתות"
+  },
+  "common": {
+    "loading": "טוען...",
+    "error": "אירעה שגיאה",
+    "yes": "כן",
+    "no": "לא",
+    "cancel": "ביטול",
+    "confirm": "אישור"
+  }
+}

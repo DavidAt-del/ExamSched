@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/.vite
+.git
+.github
+infra
+*.log
+.env
+.env.*
