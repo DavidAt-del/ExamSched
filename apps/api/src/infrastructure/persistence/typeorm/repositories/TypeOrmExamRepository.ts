@@ -34,10 +34,24 @@ export class TypeOrmExamRepository implements IExamRepository {
     return rows.map(ExamMapper.toDomain);
   }
 
+  public async findByPeriod(periodId: string): Promise<Exam[]> {
+    const rows = await this.repo
+      .createQueryBuilder('e')
+      .where('e.period_id = :periodId', { periodId })
+      .orderBy('e.exam_date', 'ASC')
+      .addOrderBy('e.start_time', 'ASC')
+      .getMany();
+    return rows.map(ExamMapper.toDomain);
+  }
+
   public async save(exam: Exam): Promise<void> {
     const existing = await this.repo.findOne({ where: { id: exam.id } });
     const target = existing ?? this.repo.create();
     ExamMapper.toOrm(exam, target);
     await this.repo.save(target);
+  }
+
+  public async deleteById(id: string): Promise<void> {
+    await this.repo.delete({ id });
   }
 }

@@ -13,6 +13,7 @@ import { IUserRepositoryToken } from '../application/ports/repositories/IUserRep
 import { IExamRepositoryToken } from '../application/ports/repositories/IExamRepository.js';
 import { IExamPeriodRepositoryToken } from '../application/ports/repositories/IExamPeriodRepository.js';
 import { IAvailabilityRepositoryToken } from '../application/ports/repositories/IAvailabilityRepository.js';
+import { IAssignmentRepositoryToken } from '../application/ports/repositories/IAssignmentRepository.js';
 
 import { SystemClock } from '../infrastructure/system/SystemClock.js';
 import { UuidIdGenerator } from '../infrastructure/system/UuidIdGenerator.js';
@@ -26,6 +27,7 @@ import { TypeOrmUserRepository } from '../infrastructure/persistence/typeorm/rep
 import { TypeOrmExamRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmExamRepository.js';
 import { TypeOrmExamPeriodRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmExamPeriodRepository.js';
 import { TypeOrmAvailabilityRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmAvailabilityRepository.js';
+import { TypeOrmAssignmentRepository } from '../infrastructure/persistence/typeorm/repositories/TypeOrmAssignmentRepository.js';
 
 export function registerDependencies(dataSource: DataSource): void {
   const env = loadEnv();
@@ -57,6 +59,9 @@ export function registerDependencies(dataSource: DataSource): void {
   });
   container.register(IAvailabilityRepositoryToken, {
     useValue: new TypeOrmAvailabilityRepository(dataSource),
+  });
+  container.register(IAssignmentRepositoryToken, {
+    useValue: new TypeOrmAssignmentRepository(dataSource),
   });
 }
 

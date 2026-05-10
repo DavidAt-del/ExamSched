@@ -18,10 +18,22 @@ export class TypeOrmExamPeriodRepository implements IExamPeriodRepository {
     return row ? ExamPeriodMapper.toDomain(row) : null;
   }
 
+  public async findAll(): Promise<ExamPeriod[]> {
+    const rows = await this.repo
+      .createQueryBuilder('p')
+      .orderBy('p.created_at', 'DESC')
+      .getMany();
+    return rows.map(ExamPeriodMapper.toDomain);
+  }
+
   public async save(period: ExamPeriod): Promise<void> {
     const existing = await this.repo.findOne({ where: { id: period.id } });
     const target = existing ?? this.repo.create();
     ExamPeriodMapper.toOrm(period, target);
     await this.repo.save(target);
+  }
+
+  public async deleteById(id: string): Promise<void> {
+    await this.repo.delete({ id });
   }
 }

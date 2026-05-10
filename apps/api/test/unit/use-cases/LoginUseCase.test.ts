@@ -42,7 +42,9 @@ describe('LoginUseCase', () => {
     users = {
       findById: vi.fn(),
       findByNationalId: vi.fn(),
+      findAllProctors: vi.fn(),
       save: vi.fn(),
+      deactivate: vi.fn(),
     };
     hasher = {
       hash: vi.fn(),
