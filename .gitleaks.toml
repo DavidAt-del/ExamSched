@@ -16,6 +16,8 @@ paths = [
   # Test fixtures use seeded "123456" passwords for proctor login flows.
   '''apps/api/test/.+''',
   '''apps/web/test/.+''',
+  # Playwright E2E fixtures + helpers seed throwaway credentials only.
+  '''apps/web/e2e/.+''',
 ]
 regexes = [
   # Bootstrap default JWT secret used as a dev fallback only; production
@@ -23,4 +25,7 @@ regexes = [
   '''dev-only-secret-change-me-please-1234''',
   # The spec-mandated default proctor password literal.
   '''123456''',
+  # Cloud Build E2E sidecar uses an explicitly throwaway JWT secret to boot
+  # the dev API; production uses Secret Manager.
+  '''e2e-only-secret-do-not-use-in-prod-1234''',
 ]

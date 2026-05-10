@@ -103,6 +103,87 @@ steps:
         apt-get install -qq -y --no-install-recommends nodejs
         npm run test:integration --workspace @app/api
 
+  - id: test-e2e
+    # End-to-end Playwright suite. Brings up Postgres in a sidecar, runs
+    # migrations, starts the dev API + dev web, then drives the live stack
+    # through Playwright. Same flow as `npm run test:e2e --workspace @app/web`
+    # locally.
+    #
+    # Like `test-integration`, this needs Docker socket access (for the
+    # Postgres sidecar), so we use `gcr.io/cloud-builders/docker`. Node 22
+    # is added via NodeSource APT with a pinned GPG fingerprint, mirroring
+    # the integration-test step. Playwright browsers are installed via
+    # `playwright install --with-deps` against the @playwright/test version
+    # in package-lock.json.
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        EXPECTED_KEY_FINGERPRINT="9FD3B784BC1C6FC31A8A0A1C1655A0AB68576280"
+        apt-get update -qq
+        apt-get install -qq -y --no-install-recommends ca-certificates curl gnupg
+        install -m 0755 -d /etc/apt/keyrings
+        TMP_KEY="$(mktemp)"
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "${TMP_KEY}"
+        ACTUAL_FINGERPRINT="$(gpg --show-keys --with-colons --with-fingerprint "${TMP_KEY}" \
+          | awk -F: '$1 == "fpr" {print $10; exit}')"
+        if [ "${ACTUAL_FINGERPRINT}" != "${EXPECTED_KEY_FINGERPRINT}" ]; then
+          echo "NodeSource GPG key fingerprint mismatch:" >&2
+          echo "  expected: ${EXPECTED_KEY_FINGERPRINT}" >&2
+          echo "  actual:   ${ACTUAL_FINGERPRINT}" >&2
+          exit 1
+        fi
+        gpg --dearmor < "${TMP_KEY}" > /etc/apt/keyrings/nodesource.gpg
+        rm -f "${TMP_KEY}"
+        echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+          > /etc/apt/sources.list.d/nodesource.list
+        apt-get update -qq
+        apt-get install -qq -y --no-install-recommends nodejs
+
+        # Postgres sidecar — shares the host network so the API can reach
+        # it on localhost:5432 without configuring a private bridge.
+        docker run -d --rm --name e2e-pg \
+          -e POSTGRES_USER=app \
+          -e POSTGRES_PASSWORD=app \
+          -e POSTGRES_DB=proctor_scheduler \
+          --network host \
+          postgres:17
+        for i in $(seq 1 60); do
+          if docker exec e2e-pg pg_isready -U app -d proctor_scheduler >/dev/null 2>&1; then
+            break
+          fi
+          sleep 1
+        done
+
+        # Install Playwright system deps + browsers (cached at /root/.cache/ms-playwright
+        # if Cloud Build re-uses the volume across runs; otherwise re-fetched).
+        (cd apps/web && npx --no-install playwright install --with-deps chromium firefox webkit)
+
+        # API config — DB_HOST/DB_USER/DB_PASSWORD/DB_NAME match the
+        # @app/api Zod env schema, JWT_SECRET is required at boot.
+        export DB_HOST=localhost DB_PORT=5432 \
+               DB_USER=app DB_PASSWORD=app DB_NAME=proctor_scheduler \
+               JWT_SECRET="e2e-only-secret-do-not-use-in-prod-1234"
+
+        npm --workspace @app/api run migration:run
+        npm --workspace @app/api run dev &
+        API_PID=$!
+        npm --workspace @app/web run dev &
+        WEB_PID=$!
+        for i in $(seq 1 90); do curl -sf http://localhost:8080/api/health && break || sleep 1; done
+        for i in $(seq 1 90); do curl -sf http://localhost:5173 && break || sleep 1; done
+
+        E2E_SKIP_WEBSERVER=1 \
+          E2E_DB_HOST=localhost E2E_DB_PORT=5432 \
+          E2E_DB_USER=app E2E_DB_PASSWORD=app E2E_DB_NAME=proctor_scheduler \
+          CI=true \
+          npm --workspace @app/web run test:e2e
+
+        kill "$API_PID" "$WEB_PID" || true
+        docker rm -f e2e-pg || true
+
   - id: build-api-image
     name: gcr.io/cloud-builders/docker
     args:
