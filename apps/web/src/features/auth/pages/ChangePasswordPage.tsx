@@ -56,7 +56,7 @@ export function ChangePasswordPage(): JSX.Element {
   const serverError =
     status === 401
       ? t('auth.changePassword.errors.invalidCurrent')
-      : status !== null
+      : error
         ? t('common.error')
         : null;
 
