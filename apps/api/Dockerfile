@@ -4,12 +4,12 @@ COPY package.json package-lock.json* ./
 COPY tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
-RUN npm ci --workspaces --include-workspace-root --no-audit --no-fund
+RUN npm ci --workspaces --include-workspace-root --no-audit --no-fund --ignore-scripts
 
 FROM deps AS build
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
-RUN npm --workspace @app/api run build
+RUN npm --workspace @app/shared run build && npm --workspace @app/api run build
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
