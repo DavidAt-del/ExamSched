@@ -11,6 +11,7 @@ import { IEmailServiceToken } from '../application/ports/services/IEmailService.
 import { ITempPasswordGeneratorToken } from '../application/ports/services/ITempPasswordGenerator.js';
 import { IProctorRowParserToken } from '../application/ports/services/IProctorRowParser.js';
 import { IAuditLoggerToken } from '../application/ports/services/IAuditLogger.js';
+import { IAuditLogQueryToken } from '../application/ports/services/IAuditLogQuery.js';
 import { IScheduleExporterToken } from '../application/ports/services/IScheduleExporter.js';
 import { ISchedulingEngineToken } from '../application/ports/services/ISchedulingEngine.js';
 import { IScheduleEmailBuilderToken } from '../application/ports/services/IScheduleEmailBuilder.js';
@@ -94,9 +95,12 @@ export function registerDependencies(dataSource: DataSource): void {
   container.register(ISchedulingEngineToken, { useClass: GreedySchedulingEngine });
   container.register(IScheduleExporterToken, { useClass: ExcelScheduleExporter });
   container.register(IScheduleEmailBuilderToken, { useClass: ScheduleEmailBuilder });
-  container.register(IAuditLoggerToken, {
-    useValue: new PostgresAuditLogger(dataSource),
-  });
+
+  // Audit logger: same Postgres-backed instance implements both the write
+  // (IAuditLogger) and read (IAuditLogQuery) ports.
+  const auditLogger = new PostgresAuditLogger(dataSource);
+  container.register(IAuditLoggerToken, { useValue: auditLogger });
+  container.register(IAuditLogQueryToken, { useValue: auditLogger });
 }
 
 export { container };

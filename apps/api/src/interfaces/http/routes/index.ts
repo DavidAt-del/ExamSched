@@ -68,6 +68,13 @@ export function buildRouter(): Router {
   admin.get('/periods/:periodId/exams', wrap(AdminController.listExams));
   admin.delete('/periods/:periodId/exams/:id', wrap(AdminController.deleteExam));
 
+  // ── Staff users (exam_staff role) ──────────────────────────────────────
+  admin.get('/users', wrap(AdminController.listStaffUsers));
+  admin.post('/users/:id/reset-password', wrap(AdminController.resetStaffPassword));
+
+  // ── Audit log ──────────────────────────────────────────────────────────
+  admin.get('/audit-log', wrap(AdminController.listAuditLog));
+
   // ── Scheduling ─────────────────────────────────────────────────────────
   admin.post('/periods/:periodId/schedule', wrap(SchedulingController.run));
   admin.get('/periods/:periodId/schedule', wrap(SchedulingController.view));

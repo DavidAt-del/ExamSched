@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Proctor Scheduler">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <rect x="80" y="128" width="352" height="304" rx="24" fill="#f8fafc"/>
+  <rect x="80" y="128" width="352" height="64" fill="#16a34a"/>
+  <circle cx="160" cy="96" r="20" fill="#0f172a"/>
+  <circle cx="352" cy="96" r="20" fill="#0f172a"/>
+  <g fill="#0f172a">
+    <rect x="120" y="232" width="56" height="56" rx="8"/>
+    <rect x="200" y="232" width="56" height="56" rx="8" opacity="0.55"/>
+    <rect x="280" y="232" width="56" height="56" rx="8"/>
+    <rect x="360" y="232" width="36" height="56" rx="8" opacity="0.35"/>
+    <rect x="120" y="312" width="56" height="56" rx="8" opacity="0.35"/>
+    <rect x="200" y="312" width="56" height="56" rx="8"/>
+    <rect x="280" y="312" width="56" height="56" rx="8" opacity="0.55"/>
+    <rect x="360" y="312" width="36" height="56" rx="8"/>
+  </g>
+</svg>

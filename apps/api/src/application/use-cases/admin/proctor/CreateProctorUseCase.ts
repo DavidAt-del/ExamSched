@@ -16,8 +16,13 @@ import {
   IIdGeneratorToken,
   type IIdGenerator,
 } from '../../../ports/services/IIdGenerator.js';
+import {
+  IAuditLoggerToken,
+  type IAuditLogger,
+} from '../../../ports/services/IAuditLogger.js';
 
 export interface CreateProctorInput {
+  actorId: string;
   nationalId: string;
   firstName: string;
   lastName: string;
@@ -37,6 +42,7 @@ export class CreateProctorUseCase {
     @inject(IPasswordHasherToken) private readonly hasher: IPasswordHasher,
     @inject(IClockToken) private readonly clock: IClock,
     @inject(IIdGeneratorToken) private readonly ids: IIdGenerator,
+    @inject(IAuditLoggerToken) private readonly audit: IAuditLogger,
   ) {}
 
   public async execute(input: CreateProctorInput): Promise<User> {
@@ -66,6 +72,13 @@ export class CreateProctorUseCase {
       updatedAt: now,
     });
     await this.users.save(user);
+    await this.audit.log({
+      actorId: input.actorId,
+      action: 'proctor.created',
+      targetType: 'user',
+      targetId: user.id,
+      payload: { proctorType: user.proctorType },
+    });
     return user;
   }
 }

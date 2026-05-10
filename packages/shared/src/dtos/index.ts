@@ -27,6 +27,8 @@ export type {
   ExamListResponse,
   ResetPasswordResponse,
   ImportProctorsResult,
+  StaffUserDto,
+  StaffUserListResponse,
 } from '../schemas/admin.js';
 
 export type {
@@ -52,3 +54,9 @@ export type {
   MyScheduleResponse,
   FinalizeAvailabilityResponse,
 } from '../schemas/proctor.js';
+
+export type {
+  AuditLogQueryRequest,
+  AuditLogEntryDto,
+  AuditLogPageResponse,
+} from '../schemas/audit.js';

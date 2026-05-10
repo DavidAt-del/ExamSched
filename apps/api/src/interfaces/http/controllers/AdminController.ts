@@ -2,10 +2,13 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { container } from 'tsyringe';
 import {
+  AuditLogQueryRequestSchema,
   CreateProctorRequestSchema,
   UpdateProctorRequestSchema,
   CreateExamPeriodRequestSchema,
   CreateExamRequestSchema,
+  type AuditLogEntryDto,
+  type AuditLogPageResponse,
   type ProctorListItem,
   type ProctorListResponse,
   type ExamPeriodDto,
@@ -13,6 +16,8 @@ import {
   type ExamDto,
   type ExamListResponse,
   type ResetPasswordResponse,
+  type StaffUserDto,
+  type StaffUserListResponse,
 } from '@app/shared';
 import { CreateProctorUseCase } from '../../../application/use-cases/admin/proctor/CreateProctorUseCase.js';
 import { UpdateProctorUseCase } from '../../../application/use-cases/admin/proctor/UpdateProctorUseCase.js';
@@ -26,6 +31,9 @@ import { CreateExamUseCase } from '../../../application/use-cases/admin/exam-per
 import { DeleteExamUseCase } from '../../../application/use-cases/admin/exam-period/DeleteExamUseCase.js';
 import { ListExamsForPeriodUseCase } from '../../../application/use-cases/admin/exam-period/ListExamsForPeriodUseCase.js';
 import { ImportProctorsUseCase } from '../../../application/use-cases/admin/proctor/ImportProctorsUseCase.js';
+import { ListStaffUsersUseCase } from '../../../application/use-cases/admin/staff/ListStaffUsersUseCase.js';
+import { ResetStaffPasswordUseCase } from '../../../application/use-cases/admin/staff/ResetStaffPasswordUseCase.js';
+import { ListAuditLogUseCase } from '../../../application/use-cases/admin/audit/ListAuditLogUseCase.js';
 import { DomainError } from '../../../domain/errors/DomainError.js';
 import type { ImportProctorsResult } from '@app/shared';
 import type { User } from '../../../domain/entities/User.js';
@@ -83,7 +91,7 @@ export class AdminController {
   public static async createProctor(req: Request, res: Response): Promise<void> {
     const input = CreateProctorRequestSchema.parse(req.body);
     const useCase = container.resolve(CreateProctorUseCase);
-    const user = await useCase.execute(input);
+    const user = await useCase.execute({ ...input, actorId: req.auth!.sub });
     res.status(201).json(toProctorListItem(user));
   }
 
@@ -105,7 +113,7 @@ export class AdminController {
   public static async deactivateProctor(req: Request, res: Response): Promise<void> {
     const { id } = IdParamSchema.parse(req.params);
     const useCase = container.resolve(DeactivateProctorUseCase);
-    await useCase.execute({ userId: id });
+    await useCase.execute({ actorId: req.auth!.sub, userId: id });
     res.status(204).end();
   }
 
@@ -115,7 +123,11 @@ export class AdminController {
       throw new DomainError('INVARIANT_VIOLATED', 'Missing uploaded file', 400);
     }
     const useCase = container.resolve(ImportProctorsUseCase);
-    const result = await useCase.execute({ buffer: file.buffer, mimeType: file.mimetype });
+    const result = await useCase.execute({
+      actorId: req.auth!.sub,
+      buffer: file.buffer,
+      mimeType: file.mimetype,
+    });
     const body: ImportProctorsResult = result;
     res.status(200).json(body);
   }
@@ -123,7 +135,10 @@ export class AdminController {
   public static async resetProctorPassword(req: Request, res: Response): Promise<void> {
     const { id } = IdParamSchema.parse(req.params);
     const useCase = container.resolve(ResetProctorPasswordUseCase);
-    const { temporaryPassword } = await useCase.execute({ userId: id });
+    const { temporaryPassword } = await useCase.execute({
+      actorId: req.auth!.sub,
+      userId: id,
+    });
     const body: ResetPasswordResponse = { temporaryPassword };
     res.json(body);
   }
@@ -179,5 +194,62 @@ export class AdminController {
     const useCase = container.resolve(DeleteExamUseCase);
     await useCase.execute({ examId: id });
     res.status(204).end();
+  }
+
+  // ── Staff users (exam_staff role) ──────────────────────────────────────
+
+  public static async listStaffUsers(_req: Request, res: Response): Promise<void> {
+    const useCase = container.resolve(ListStaffUsersUseCase);
+    const users = await useCase.execute({ includeInactive: true });
+    const body: StaffUserListResponse = {
+      users: users.map<StaffUserDto>((u) => ({
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        active: u.active,
+      })),
+    };
+    res.json(body);
+  }
+
+  public static async resetStaffPassword(req: Request, res: Response): Promise<void> {
+    const { id } = IdParamSchema.parse(req.params);
+    const useCase = container.resolve(ResetStaffPasswordUseCase);
+    const { temporaryPassword } = await useCase.execute({
+      actorId: req.auth!.sub,
+      userId: id,
+    });
+    const body: ResetPasswordResponse = { temporaryPassword };
+    res.json(body);
+  }
+
+  // ── Audit log ──────────────────────────────────────────────────────────
+
+  public static async listAuditLog(req: Request, res: Response): Promise<void> {
+    const q = AuditLogQueryRequestSchema.parse(req.query);
+    const useCase = container.resolve(ListAuditLogUseCase);
+    const page = await useCase.execute({
+      page: q.page,
+      limit: q.limit,
+      from: q.from === undefined ? undefined : new Date(q.from),
+      to: q.to === undefined ? undefined : new Date(q.to),
+    });
+    const body: AuditLogPageResponse = {
+      page: page.page,
+      limit: page.limit,
+      total: page.total,
+      items: page.items.map<AuditLogEntryDto>((it) => ({
+        id: it.id,
+        actorId: it.actorId,
+        actorName: it.actorName,
+        action: it.action,
+        targetType: it.targetType,
+        targetId: it.targetId,
+        payload: it.payload,
+        createdAt: it.createdAt.toISOString(),
+      })),
+    };
+    res.json(body);
   }
 }

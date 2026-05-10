@@ -26,12 +26,16 @@ export class TypeOrmUserRepository implements IUserRepository {
   }
 
   public async findAllProctors(opts: { includeInactive?: boolean } = {}): Promise<User[]> {
-    const qb = this.repo
-      .createQueryBuilder('u')
-      .where('u.role = :role', { role: UserRole.Proctor });
-    if (!opts.includeInactive) {
-      qb.andWhere('u.active = true');
-    }
+    return this.findAllByRole(UserRole.Proctor, opts.includeInactive ?? false);
+  }
+
+  public async findAllStaff(opts: { includeInactive?: boolean } = {}): Promise<User[]> {
+    return this.findAllByRole(UserRole.ExamStaff, opts.includeInactive ?? false);
+  }
+
+  private async findAllByRole(role: UserRole, includeInactive: boolean): Promise<User[]> {
+    const qb = this.repo.createQueryBuilder('u').where('u.role = :role', { role });
+    if (!includeInactive) qb.andWhere('u.active = true');
     qb.orderBy('u.last_name', 'ASC').addOrderBy('u.first_name', 'ASC');
     const rows = await qb.getMany();
     return rows.map(UserMapper.toDomain);

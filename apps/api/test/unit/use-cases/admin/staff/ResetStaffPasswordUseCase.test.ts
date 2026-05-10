@@ -1,39 +1,39 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProctorType, UserRole } from '@app/shared';
-import { ResetProctorPasswordUseCase } from '../../../../src/application/use-cases/admin/proctor/ResetProctorPasswordUseCase.js';
-import { User } from '../../../../src/domain/entities/User.js';
-import { NationalId } from '../../../../src/domain/value-objects/NationalId.js';
+import { ResetStaffPasswordUseCase } from '../../../../../src/application/use-cases/admin/staff/ResetStaffPasswordUseCase.js';
+import { User } from '../../../../../src/domain/entities/User.js';
+import { NationalId } from '../../../../../src/domain/value-objects/NationalId.js';
 import {
   ForbiddenError,
   NotFoundError,
-} from '../../../../src/domain/errors/DomainError.js';
+} from '../../../../../src/domain/errors/DomainError.js';
 
 const fixedNow = new Date('2026-05-10T10:00:00Z');
 
-function mkProctor(): User {
+function mkUser(role: UserRole, opts: { active?: boolean } = {}): User {
   return new User({
     id: 'u1',
     nationalId: NationalId.create('000000018'),
-    firstName: 'D',
-    lastName: 'C',
-    email: null,
+    firstName: 'A',
+    lastName: 'B',
+    email: 'a@example.com',
     phone: null,
     passwordHash: 'old-hash',
-    role: UserRole.Proctor,
-    proctorType: ProctorType.Opener,
+    role,
+    proctorType: role === UserRole.Proctor ? ProctorType.Opener : null,
     mustChangePassword: false,
-    active: true,
+    active: opts.active ?? true,
     createdAt: fixedNow,
     updatedAt: fixedNow,
   });
 }
 
-describe('ResetProctorPasswordUseCase', () => {
+describe('ResetStaffPasswordUseCase', () => {
   let users: ReturnType<typeof makeUsers>;
   let hasher: { hash: ReturnType<typeof vi.fn>; verify: ReturnType<typeof vi.fn> };
   let temp: { next: ReturnType<typeof vi.fn> };
   let audit: { log: ReturnType<typeof vi.fn> };
-  let useCase: ResetProctorPasswordUseCase;
+  let useCase: ResetStaffPasswordUseCase;
 
   function makeUsers() {
     return {
@@ -51,7 +51,7 @@ describe('ResetProctorPasswordUseCase', () => {
     hasher = { hash: vi.fn().mockResolvedValue('hashed'), verify: vi.fn() };
     temp = { next: vi.fn().mockReturnValue('AB23CD') };
     audit = { log: vi.fn() };
-    useCase = new ResetProctorPasswordUseCase(
+    useCase = new ResetStaffPasswordUseCase(
       users,
       hasher,
       temp,
@@ -68,32 +68,23 @@ describe('ResetProctorPasswordUseCase', () => {
     expect(audit.log).not.toHaveBeenCalled();
   });
 
-  it('rejects non-proctor users', async () => {
-    users.findById.mockResolvedValue(
-      new User({
-        id: 'u',
-        nationalId: NationalId.create('000000018'),
-        firstName: 'A',
-        lastName: 'B',
-        email: null,
-        phone: null,
-        passwordHash: 'h',
-        role: UserRole.Admin,
-        proctorType: null,
-        mustChangePassword: false,
-        active: true,
-        createdAt: fixedNow,
-        updatedAt: fixedNow,
-      }),
-    );
-    await expect(useCase.execute({ actorId: 'admin', userId: 'u' })).rejects.toBeInstanceOf(
+  it('rejects when target user is not exam-staff (proctor)', async () => {
+    users.findById.mockResolvedValue(mkUser(UserRole.Proctor));
+    await expect(useCase.execute({ actorId: 'admin', userId: 'u1' })).rejects.toBeInstanceOf(
       ForbiddenError,
     );
     expect(audit.log).not.toHaveBeenCalled();
   });
 
-  it('returns the plaintext temp password, forces a change, and audits without leaking the password', async () => {
-    const user = mkProctor();
+  it('rejects when target user is admin (separate flow)', async () => {
+    users.findById.mockResolvedValue(mkUser(UserRole.Admin));
+    await expect(useCase.execute({ actorId: 'admin', userId: 'u1' })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
+  });
+
+  it('returns the plaintext temporary password and audits the reset', async () => {
+    const user = mkUser(UserRole.ExamStaff);
     users.findById.mockResolvedValue(user);
     const out = await useCase.execute({ actorId: 'admin', userId: 'u1' });
     expect(out.temporaryPassword).toBe('AB23CD');
@@ -105,12 +96,11 @@ describe('ResetProctorPasswordUseCase', () => {
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
         actorId: 'admin',
-        action: 'proctor.password_reset',
+        action: 'staff.password_reset',
         targetType: 'user',
         targetId: 'u1',
       }),
     );
-    // Sanity: the recorded payload must not include the plaintext password.
     const auditCall = audit.log.mock.calls[0]?.[0] as { payload?: unknown };
     expect(JSON.stringify(auditCall.payload ?? {})).not.toContain('AB23CD');
   });

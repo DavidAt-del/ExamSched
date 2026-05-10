@@ -117,6 +117,22 @@ export const ExamListResponseSchema = z.object({
 });
 export type ExamListResponse = z.infer<typeof ExamListResponseSchema>;
 
+// ── Staff users (exam_staff role) ─────────────────────────────────────────
+
+export const StaffUserDtoSchema = z.object({
+  id: z.string().uuid(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string().email().nullable(),
+  active: z.boolean(),
+});
+export type StaffUserDto = z.infer<typeof StaffUserDtoSchema>;
+
+export const StaffUserListResponseSchema = z.object({
+  users: z.array(StaffUserDtoSchema),
+});
+export type StaffUserListResponse = z.infer<typeof StaffUserListResponseSchema>;
+
 // ── Password reset ────────────────────────────────────────────────────────
 
 export const ResetPasswordResponseSchema = z.object({

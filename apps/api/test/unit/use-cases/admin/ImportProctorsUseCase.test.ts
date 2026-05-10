@@ -40,7 +40,7 @@ describe('ImportProctorsUseCase', () => {
 
   it('counts created rows', async () => {
     create.execute.mockResolvedValue(undefined);
-    const out = await useCase.execute({ buffer: Buffer.from(''), mimeType: 'text/csv' });
+    const out = await useCase.execute({ actorId: 'admin', buffer: Buffer.from(''), mimeType: 'text/csv' });
     expect(out).toEqual({ created: 2, skipped: 0, errors: [] });
   });
 
@@ -48,7 +48,7 @@ describe('ImportProctorsUseCase', () => {
     create.execute
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new DomainError('CONFLICT', 'duplicate', 409));
-    const out = await useCase.execute({ buffer: Buffer.from(''), mimeType: 'text/csv' });
+    const out = await useCase.execute({ actorId: 'admin', buffer: Buffer.from(''), mimeType: 'text/csv' });
     expect(out).toEqual({ created: 1, skipped: 1, errors: [] });
   });
 
@@ -56,7 +56,7 @@ describe('ImportProctorsUseCase', () => {
     create.execute
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error('boom'));
-    const out = await useCase.execute({ buffer: Buffer.from(''), mimeType: 'text/csv' });
+    const out = await useCase.execute({ actorId: 'admin', buffer: Buffer.from(''), mimeType: 'text/csv' });
     expect(out.created).toBe(1);
     expect(out.skipped).toBe(0);
     expect(out.errors[0]).toMatch(/Row 3:/);

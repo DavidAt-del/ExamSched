@@ -7,6 +7,7 @@ import {
 import { DomainError } from '../../../../domain/errors/DomainError.js';
 
 export interface ImportProctorsInput {
+  actorId: string;
   buffer: Buffer;
   mimeType: string;
 }
@@ -33,6 +34,7 @@ export class ImportProctorsUseCase {
     for (const row of rows) {
       try {
         await this.create.execute({
+          actorId: input.actorId,
           nationalId: row.nationalId,
           firstName: row.firstName,
           lastName: row.lastName,

@@ -5,7 +5,9 @@
     "nav": {
       "calendar": "לוח זמינות",
       "proctors": "משגיחים",
-      "periods": "תקופות בחינה"
+      "periods": "תקופות בחינה",
+      "users": "משתמשי מערכת",
+      "auditLog": "יומן פעולות"
     }
   },
   "login": {
@@ -131,6 +133,44 @@
         "noRecipients": "אין משגיחים שובצו לתקופה זו.",
         "confirm": "שלח",
         "result": "נשלחו: {{sent}} • דולגו: {{skipped}} • נכשלו: {{failed}}"
+      }
+    },
+    "users": {
+      "title": "משתמשי מדור בחינות",
+      "empty": "אין כרגע משתמשי מדור בחינות במערכת.",
+      "table": {
+        "name": "שם",
+        "email": "דואל",
+        "status": "סטטוס",
+        "actions": "פעולות"
+      },
+      "actions": {
+        "resetPassword": "איפוס סיסמה"
+      },
+      "resetConfirm": {
+        "title": "איפוס סיסמה",
+        "description": "תיווצר סיסמה זמנית עבור {{name}}. המשתמש יידרש להחליפה בכניסה הבאה."
+      }
+    },
+    "auditLog": {
+      "title": "יומן פעולות",
+      "empty": "אין רשומות בטווח שנבחר.",
+      "systemActor": "מערכת",
+      "viewPayload": "הצג פרטים",
+      "prev": "הקודם",
+      "next": "הבא",
+      "pageInfo": "עמוד {{page}} מתוך {{totalPages}} • {{total}} רשומות",
+      "filters": {
+        "from": "מתאריך",
+        "to": "עד תאריך",
+        "pageSize": "רשומות בעמוד"
+      },
+      "table": {
+        "timestamp": "מועד",
+        "actor": "פעיל",
+        "action": "פעולה",
+        "target": "אובייקט",
+        "payload": "פרטים"
       }
     }
   },

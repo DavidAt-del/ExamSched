@@ -43,6 +43,7 @@ describe('LoginUseCase', () => {
       findById: vi.fn(),
       findByNationalId: vi.fn(),
       findAllProctors: vi.fn(),
+      findAllStaff: vi.fn(),
       save: vi.fn(),
       deactivate: vi.fn(),
     };

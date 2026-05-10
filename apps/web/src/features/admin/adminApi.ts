@@ -1,4 +1,5 @@
 import type {
+  AuditLogPageResponse,
   CreateExamPeriodRequest,
   CreateExamRequest,
   CreateProctorRequest,
@@ -9,6 +10,7 @@ import type {
   ProctorListItem,
   ProctorListResponse,
   ResetPasswordResponse,
+  StaffUserListResponse,
   UpdateProctorRequest,
 } from '@app/shared';
 import { api } from '../../app/api';
@@ -88,6 +90,34 @@ export const adminApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Exam'],
     }),
+
+    // ── Staff users (exam_staff role) ────────────────────────────────────
+    listStaffUsers: build.query<StaffUserListResponse, void>({
+      query: () => '/admin/users',
+      providesTags: ['User'],
+    }),
+    resetStaffPassword: build.mutation<ResetPasswordResponse, string>({
+      query: (id) => ({
+        url: `/admin/users/${id}/reset-password`,
+        method: 'POST',
+      }),
+    }),
+
+    // ── Audit log ────────────────────────────────────────────────────────
+    listAuditLog: build.query<
+      AuditLogPageResponse,
+      { page?: number; limit?: number; from?: string; to?: string }
+    >({
+      query: (q) => {
+        const params = new URLSearchParams();
+        if (q.page !== undefined) params.set('page', String(q.page));
+        if (q.limit !== undefined) params.set('limit', String(q.limit));
+        if (q.from) params.set('from', q.from);
+        if (q.to) params.set('to', q.to);
+        const qs = params.toString();
+        return qs.length > 0 ? `/admin/audit-log?${qs}` : '/admin/audit-log';
+      },
+    }),
   }),
   overrideExisting: false,
 });
@@ -105,4 +135,7 @@ export const {
   useListExamsForPeriodQuery,
   useCreateExamMutation,
   useDeleteExamMutation,
+  useListStaffUsersQuery,
+  useResetStaffPasswordMutation,
+  useListAuditLogQuery,
 } = adminApi;
