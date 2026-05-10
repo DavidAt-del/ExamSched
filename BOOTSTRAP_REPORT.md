@@ -162,6 +162,7 @@ npm run lint
 npm run typecheck
 npm run test:unit                      # 25 + 4 = 29 tests
 npm run test:integration               # requires Docker daemon
+npm --workspace @app/web run test:e2e  # Playwright: desktop + Pixel 5 + iPhone 13
 ```
 
 ### Validation results captured during bootstrap
@@ -202,7 +203,7 @@ For database credentials there is no secret to manage: the API authenticates to 
 
 3. **`ListExamsForProctorUseCase`.** Not explicitly listed in the prompt's use-case enumeration, but the Hebrew calendar in §6 needs server-side data to render the proctor's exam list with their current availability flag. Added it as a thin read use case rather than denormalising into the submit endpoint.
 
-4. **No FullCalendar e2e (Playwright).** The prompt's first iteration §6 says "supertest e2e for login + submit flow" — done. A browser-driven e2e (Playwright/Cypress) would belong in a separate slice; I left placeholders rather than scaffolding a full Playwright config.
+4. **Browser-driven E2E shipped in Phase 9.** The bootstrap prompt's §6 only required supertest E2E for the login + submit slice (✅). A full Playwright suite — desktop Chromium + Firefox smoke, plus mobile Pixel 5 / iPhone 13 device emulation — landed in Phase 9 alongside this report update; see `apps/web/e2e/*.spec.ts`. The runner expects a docker-compose Postgres + the dev API + dev web, all of which the Playwright config can spawn automatically (`webServer`).
 
 5. **Onion ESLint rules.** I used `no-restricted-imports` with **path patterns** (e.g., `**/infrastructure/**`) rather than the prompt's example `*/infrastructure/*`. ESLint's `no-restricted-imports` matches `import` strings, not filesystem paths, so the patterns target the relative-import strings that show up in source. Tested: a deliberate cross-layer import surfaces as an ESLint error.
 
@@ -250,6 +251,9 @@ this section first if you're picking up the codebase fresh.
 |    |                  | PWA service worker.                                                     |
 | 7  | Phase 8          | Mission completion: change-password page (P0), CI integration tests +   |
 |    |                  | gitleaks, PWA PNG icons, this section.                                  |
+| 9  | Phase 9          | Playwright user-acceptance suite: 10 specs across login, forced reset,  |
+|    |                  | proctor + admin flows, RTL, PWA. Desktop Chromium/Firefox + Pixel 5 +   |
+|    |                  | iPhone 13 device emulation. Wired into Cloud Build as `test-e2e`.       |
 
 ### End-to-end flow that now works
 
@@ -280,7 +284,37 @@ npm run build         # ✅ both apps (web build:icons regenerates PNGs)
 
 CI pipeline (`cloudbuild.yaml`) gates each push:
 `install → secret-scan (gitleaks) → lint → typecheck → test:unit →
-test:integration (Testcontainers) → build images → migrate → deploy`.
+test:integration (Testcontainers) → test-e2e (Playwright + sidecar Postgres)
+→ build images → migrate → deploy`.
+
+### End-to-end (browser) tests
+
+`apps/web/e2e/*.spec.ts` runs Playwright against the live stack
+(Postgres + API + web). Specs:
+
+| Spec | Coverage |
+|------|---------|
+| `auth.spec.ts` | login, invalid creds, role-based redirect, logout. |
+| `forced-change-password.spec.ts` | `/change-password` flow + can't-be-bypassed guard. |
+| `proctor-availability.spec.ts` | calendar, selected-dates panel, submit-locks. |
+| `proctor-my-schedule.spec.ts` | "השיבוץ שלי" tab visibility + empty state after send. |
+| `admin-proctors.spec.ts` | create, reset password, deactivate. |
+| `admin-periods-exams.spec.ts` | period card, expand exams, create + close period. |
+| `admin-scheduling.spec.ts` | run scheduler, send modal, xlsx export link. |
+| `admin-users-audit.spec.ts` | staff password reset, audit log surface. |
+| `i18n-rtl.spec.ts` | `dir=rtl`, Hebrew nav, computed input direction. |
+| `pwa.spec.ts` | manifest JSON, PNG icons, `/service-worker.js`. |
+
+Browser projects (`playwright.config.ts`):
+
+- `desktop-chromium` — full coverage.
+- `desktop-firefox` — smoke (auth + RTL).
+- `mobile-chromium` (Pixel 5) — proctor flows + RTL.
+- `mobile-webkit` (iPhone 13) — proctor flows + RTL + PWA.
+
+Local run: `docker compose up -d postgres && npm --workspace @app/web run
+test:e2e` (the config will spawn the dev API + dev web). To skip the auto
+spawn (CI brings them up explicitly), set `E2E_SKIP_WEBSERVER=1`.
 
 ### PWA
 
@@ -313,6 +347,7 @@ handoff. Result:
 | Container vuln scan                                       | ⚠️ relies on Artifact Registry's automatic scan post-push |
 | First-time proctor flow (`/change-password`)              | ✅ page + route shipped (Phase 8A) |
 | PWA PNG icons (192 / 512 / Apple)                         | ✅ Phase 8D |
+| Playwright user-acceptance E2E (desktop + mobile)         | ✅ 10 specs across 4 browsers (Phase 9) |
 
 ### Explicit non-goals retained from the original handoff
 
