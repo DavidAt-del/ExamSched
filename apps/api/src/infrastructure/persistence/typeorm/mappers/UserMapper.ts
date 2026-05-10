@@ -1,15 +1,12 @@
 import { User } from '../../../../domain/entities/User.js';
 import { NationalId } from '../../../../domain/value-objects/NationalId.js';
+import { InvariantViolationError } from '../../../../domain/errors/DomainError.js';
 import type { UserOrmEntity } from '../entities/UserOrmEntity.js';
 
 export class UserMapper {
   public static toDomain(row: UserOrmEntity): User {
     return new User({
       id: row.id,
-      // Bypass check-digit validation when reading: persisted IDs are already trusted.
-      // We construct via a lightweight wrapper using create + fallback. To avoid coupling
-      // the VO to a "trusted" constructor, we re-validate; if data was inserted by an admin
-      // with a non-checksum-compliant ID it will still flow because we accept 9-digit shape.
       nationalId: NationalIdHydrate.fromString(row.nationalId),
       firstName: row.firstName,
       lastName: row.lastName,
@@ -43,19 +40,19 @@ export class UserMapper {
   }
 }
 
-// Hydration helper: rebuilds the value object without re-running the check-digit
-// rule, because we want to avoid blocking reads of historical rows. Strict
-// validation still applies on the input boundary (LoginUseCase).
+// Hydrates a NationalId from a persisted row. Persistence is treated as a
+// trusted source for shape, but we still re-run the check-digit rule and
+// fail fast if a stored row is invalid — surfaced as a typed DomainError so
+// the central handler maps it to a structured 422 response. The raw ID is
+// never logged to avoid leaking PII.
 class NationalIdHydrate {
   public static fromString(raw: string): NationalId {
     try {
       return NationalId.create(raw);
     } catch {
-      // Force-construct via the same path; this is only reachable if the DB
-      // contains a row with an invalid check digit. Log and re-throw so it's surfaced.
-
-      console.error('Stored national_id failed validation', { raw });
-      throw new Error('Stored national_id is invalid');
+      throw new InvariantViolationError(
+        'Persisted national_id failed validation; refusing to hydrate user',
+      );
     }
   }
 }

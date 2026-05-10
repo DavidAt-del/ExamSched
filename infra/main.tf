@@ -31,7 +31,12 @@ variable "environment" {
 }
 
 variable "db_iam_user" {
-  description = "Service account email used for IAM DB auth (no @-suffix)"
+  # Cloud SQL IAM authentication: when the IAM user is a service account, the
+  # username is the service account's email with the trailing
+  # ".gserviceaccount.com" stripped (Postgres caps usernames at 63 bytes).
+  # Example: api-staging@my-project.iam.gserviceaccount.com →
+  #   db_iam_user = "api-staging@my-project.iam"
+  description = "Cloud SQL IAM database username (service-account email with the '.gserviceaccount.com' suffix removed). Example: 'api-staging@my-project.iam'."
   type        = string
 }
 

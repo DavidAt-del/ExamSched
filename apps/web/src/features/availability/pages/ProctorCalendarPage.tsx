@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import {
-  useListMyExamsQuery,
-  useSubmitAvailabilityMutation,
-} from '../availabilityApi';
+import heLocale from '@fullcalendar/core/locales/he';
+import enLocale from '@fullcalendar/core/locales/en-gb';
+import { useListMyExamsQuery, useSubmitAvailabilityMutation } from '../availabilityApi';
 import type { ExamSummaryDto } from '@app/shared';
 
 export function ProctorCalendarPage(): JSX.Element {
@@ -25,11 +24,15 @@ export function ProctorCalendarPage(): JSX.Element {
             ? t('calendar.available')
             : e.myAvailability === false
               ? t('calendar.unavailable')
-              : `${e.classroomCount} 🏫`,
+              : t('calendar.classroomCount', { count: e.classroomCount }),
         start: `${e.examDate}T${e.startTime}`,
         end: `${e.examDate}T${e.endTime}`,
         backgroundColor:
-          e.myAvailability === true ? '#16a34a' : e.myAvailability === false ? '#94a3b8' : '#0f172a',
+          e.myAvailability === true
+            ? '#16a34a'
+            : e.myAvailability === false
+              ? '#94a3b8'
+              : '#0f172a',
         borderColor: 'transparent',
         extendedProps: { exam: e },
       })),
@@ -52,7 +55,8 @@ export function ProctorCalendarPage(): JSX.Element {
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             direction="rtl"
-            locale={i18n.language === 'he' ? 'he' : 'en'}
+            locales={[heLocale, enLocale]}
+            locale={i18n.language === 'he' ? 'he' : 'en-gb'}
             headerToolbar={{
               start: 'dayGridMonth,timeGridWeek',
               center: 'title',
@@ -92,14 +96,36 @@ interface DialogProps {
 
 function AvailabilityDialog({ exam, isSaving, onSave, onClose }: DialogProps): JSX.Element {
   const { t } = useTranslation();
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const cancelRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      aria-labelledby={titleId}
+      onClick={(e) => {
+        // Close on backdrop click; ignore clicks inside the panel.
+        if (e.target === dialogRef.current) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
     >
       <div className="w-full max-w-sm rounded bg-white p-6 shadow-lg">
-        <h2 className="mb-2 text-lg font-semibold">
+        <h2 id={titleId} className="mb-2 text-lg font-semibold">
           {exam.examDate} ({t('calendar.classroomCount', { count: exam.classroomCount })})
         </h2>
         <p className="mb-4 text-sm text-slate-600">
@@ -107,6 +133,7 @@ function AvailabilityDialog({ exam, isSaving, onSave, onClose }: DialogProps): J
         </p>
         <div className="flex justify-end gap-2">
           <button
+            ref={cancelRef}
             type="button"
             onClick={onClose}
             className="rounded border border-slate-300 px-3 py-1.5"
