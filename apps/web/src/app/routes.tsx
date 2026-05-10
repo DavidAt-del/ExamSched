@@ -4,6 +4,7 @@ import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ProctorCalendarPage } from '../features/availability/pages/ProctorCalendarPage';
 import { ProctorsPage } from '../features/admin/pages/ProctorsPage';
 import { ExamPeriodsPage } from '../features/admin/pages/ExamPeriodsPage';
+import { SchedulePage } from '../features/scheduling/pages/SchedulePage';
 import { useAppSelector } from './hooks';
 import { AppLayout } from '../shared/layouts/AppLayout';
 
@@ -61,6 +62,14 @@ export function AppRoutes(): JSX.Element {
           element={
             <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
               <ExamPeriodsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="admin/periods/:periodId/schedule"
+          element={
+            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+              <SchedulePage />
             </RequireRole>
           }
         />

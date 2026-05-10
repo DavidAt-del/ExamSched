@@ -90,6 +90,7 @@
         "scheduled": "Scheduled",
         "sent": "Sent"
       },
+      "openSchedule": "Open schedule",
       "closeConfirm": {
         "title": "Close period",
         "description": "Once closed, no further exams can be added and proctors can no longer update their availability."
@@ -105,6 +106,23 @@
           "title": "Delete exam",
           "description": "Exams can only be deleted from an open period that has no proctor responses yet."
         }
+      }
+    },
+    "scheduling": {
+      "title": "Schedule",
+      "run": "Run automatic scheduler",
+      "export": "Export to Excel",
+      "empty": "No exams in this period",
+      "runConfirm": {
+        "title": "Run scheduler",
+        "description": "This regenerates the schedule for the period and overwrites any existing assignments. You can still adjust individual classrooms manually afterwards."
+      },
+      "override": {
+        "title": "Classroom {{classroom}}",
+        "opener": "Opener",
+        "regular": "Regular",
+        "regularNone": "No regular",
+        "notes": "Notes"
       }
     }
   }

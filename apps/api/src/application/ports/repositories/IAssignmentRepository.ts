@@ -14,6 +14,13 @@ export interface IAssignmentRepository {
    * the exam are deleted; the new collection is inserted.
    */
   replaceForExam(examId: string, assignments: Assignment[]): Promise<void>;
+  /**
+   * Replace every assignment under the given period atomically. Used by the
+   * scheduler so a re-run is all-or-nothing.
+   */
+  replaceForPeriod(periodId: string, assignments: Assignment[]): Promise<void>;
+  /** Find a specific classroom assignment within an exam, if it exists. */
+  findByExamAndClassroom(examId: string, classroomIndex: number): Promise<Assignment | null>;
   saveOne(assignment: Assignment): Promise<void>;
 }
 
