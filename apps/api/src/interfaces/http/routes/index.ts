@@ -1,9 +1,14 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { UserRole } from '@app/shared';
 import { AuthController } from '../controllers/AuthController.js';
 import { AvailabilityController } from '../controllers/AvailabilityController.js';
 import { AdminController } from '../controllers/AdminController.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
+
+// 10 MB cap for the proctor-import upload. Stored in memory; the request is
+// rejected (413) if the cap is exceeded.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const wrap =
   <Req, Res>(fn: (req: Req, res: Res) => Promise<void>) =>
@@ -45,6 +50,7 @@ export function buildRouter(): Router {
   admin.patch('/proctors/:id', wrap(AdminController.updateProctor));
   admin.delete('/proctors/:id', wrap(AdminController.deactivateProctor));
   admin.post('/proctors/:id/reset-password', wrap(AdminController.resetProctorPassword));
+  admin.post('/proctors/import', upload.single('file'), wrap(AdminController.importProctors));
 
   admin.post('/periods', wrap(AdminController.createPeriod));
   admin.get('/periods', wrap(AdminController.listPeriods));

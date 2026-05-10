@@ -25,6 +25,9 @@ import { ListExamPeriodsUseCase } from '../../../application/use-cases/admin/exa
 import { CreateExamUseCase } from '../../../application/use-cases/admin/exam-period/CreateExamUseCase.js';
 import { DeleteExamUseCase } from '../../../application/use-cases/admin/exam-period/DeleteExamUseCase.js';
 import { ListExamsForPeriodUseCase } from '../../../application/use-cases/admin/exam-period/ListExamsForPeriodUseCase.js';
+import { ImportProctorsUseCase } from '../../../application/use-cases/admin/proctor/ImportProctorsUseCase.js';
+import { DomainError } from '../../../domain/errors/DomainError.js';
+import type { ImportProctorsResult } from '@app/shared';
 import type { User } from '../../../domain/entities/User.js';
 import type { ExamPeriod } from '../../../domain/entities/ExamPeriod.js';
 import type { Exam } from '../../../domain/entities/Exam.js';
@@ -104,6 +107,17 @@ export class AdminController {
     const useCase = container.resolve(DeactivateProctorUseCase);
     await useCase.execute({ userId: id });
     res.status(204).end();
+  }
+
+  public static async importProctors(req: Request, res: Response): Promise<void> {
+    const file = (req as Request & { file?: { buffer: Buffer; mimetype: string } }).file;
+    if (!file) {
+      throw new DomainError('INVARIANT_VIOLATED', 'Missing uploaded file', 400);
+    }
+    const useCase = container.resolve(ImportProctorsUseCase);
+    const result = await useCase.execute({ buffer: file.buffer, mimeType: file.mimetype });
+    const body: ImportProctorsResult = result;
+    res.status(200).json(body);
   }
 
   public static async resetProctorPassword(req: Request, res: Response): Promise<void> {
