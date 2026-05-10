@@ -1,0 +1,26 @@
+# Project-tuned gitleaks config. Inherits the default rule set; the allowlist
+# below carves out known-safe dev/test placeholders so the CI gate stays loud
+# only on real leaks.
+#
+# Add new entries here when introducing intentional fixture credentials —
+# never silence the scan globally.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for known-safe dev placeholders and test fixtures"
+paths = [
+  # Local dev .env example with explicitly fake values.
+  '''apps/api/\.env\.example''',
+  # Test fixtures use seeded "123456" passwords for proctor login flows.
+  '''apps/api/test/.+''',
+  '''apps/web/test/.+''',
+]
+regexes = [
+  # Bootstrap default JWT secret used as a dev fallback only; production
+  # rotates via Secret Manager. Documented in apps/api/.env.example.
+  '''dev-only-secret-change-me-please-1234''',
+  # The spec-mandated default proctor password literal.
+  '''123456''',
+]

@@ -10,6 +10,9 @@ substitutions:
   _CLOUD_SQL_INSTANCE: ''
 
 options:
+  # Bumped from the default e2-medium so the Testcontainers Postgres in the
+  # integration step has headroom; the rest of the pipeline benefits too.
+  machineType: E2_HIGHCPU_8
   logging: CLOUD_LOGGING_ONLY
   env:
     - 'NODE_ENV=production'
@@ -22,6 +25,18 @@ steps:
       - -c
       - |
         npm ci --workspaces --include-workspace-root --no-audit --no-fund
+
+  - id: secret-scan
+    # Working-tree scan (--no-git): Cloud Build's checkout has no git history.
+    # Add allowlist entries to .gitleaks.toml for known-safe placeholders.
+    name: zricethezav/gitleaks:latest
+    entrypoint: gitleaks
+    args:
+      - detect
+      - --redact
+      - --no-git
+      - --source=.
+      - --config=.gitleaks.toml
 
   - id: lint
     name: node:22
@@ -37,6 +52,21 @@ steps:
     name: node:22
     entrypoint: npm
     args: ['run', 'test:unit']
+
+  - id: test-integration
+    # Testcontainers needs Docker socket access. The cloud-builders/docker
+    # image has the daemon proxied to /var/run/docker.sock automatically.
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        # Reinstall — each step starts with a clean filesystem.
+        apt-get update -qq && apt-get install -qq -y curl ca-certificates
+        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+        apt-get install -qq -y nodejs
+        npm ci --workspaces --include-workspace-root --no-audit --no-fund
+        npm run test:integration --workspace @app/api
 
   - id: build-api-image
     name: gcr.io/cloud-builders/docker

@@ -21,6 +21,22 @@
       "nationalIdInvalid": "National ID must be 9 digits"
     }
   },
+  "auth": {
+    "changePassword": {
+      "heading": "Change password",
+      "intro": "Replace your temporary password with a personal one.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Save",
+      "success": "Password changed. Please sign in with your new password.",
+      "errors": {
+        "invalidCurrent": "Current password is incorrect.",
+        "tooShort": "Password must be at least 6 characters.",
+        "mismatch": "Passwords don't match."
+      }
+    }
+  },
   "calendar": {
     "heading": "Exam availability",
     "available": "Available",
