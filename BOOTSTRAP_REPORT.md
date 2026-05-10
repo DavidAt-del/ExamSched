@@ -231,11 +231,11 @@ For database credentials there is no secret to manage: the API authenticates to 
 - SMS notification channel (`INotificationChannel` port defined, no adapter).
 - Special-needs classroom logic (manual override path only).
 
-## 8. Shipped state (after Phases 2 → 7)
+## 8. Shipped state (mission accomplished)
 
-Everything below ships across PRs #1–6 and lands the project at the
-"meaningfully usable" milestone described in the original implementation
-handoff. Read this section first if you're picking up the codebase fresh.
+Everything below ships across PRs #1–7 and closes the project against the
+original bootstrap prompt + the Phase 2–7 implementation handoff. Read
+this section first if you're picking up the codebase fresh.
 
 ### Merged PRs
 
@@ -247,7 +247,9 @@ handoff. Read this section first if you're picking up the codebase fresh.
 | 4  | Phase 3          | Scheduler engine, manual override drawer, schedule view + Excel export. |
 | 5  | Phase 4 + 5      | Notifications (`SendSchedulesUseCase` + email builder), proctor side.   |
 | 6  | Phase 6 + 7      | Audit log read view, staff password reset, retroactive audit calls,     |
-|    |                  | PWA hardening, this report update.                                      |
+|    |                  | PWA service worker.                                                     |
+| 7  | Phase 8          | Mission completion: change-password page (P0), CI integration tests +   |
+|    |                  | gitleaks, PWA PNG icons, this section.                                  |
 
 ### End-to-end flow that now works
 
@@ -272,20 +274,45 @@ handoff. Read this section first if you're picking up the codebase fresh.
 ```bash
 npm run typecheck     # ✅ all three workspaces
 npm run lint          # ✅ incl. onion no-restricted-imports
-npm run test:unit     # ✅ 114+ API tests, 4 web tests
-npm run build         # ✅ both apps
+npm run test:unit     # ✅ 114 API tests, 6 web tests
+npm run build         # ✅ both apps (web build:icons regenerates PNGs)
 ```
+
+CI pipeline (`cloudbuild.yaml`) gates each push:
+`install → secret-scan (gitleaks) → lint → typecheck → test:unit →
+test:integration (Testcontainers) → build images → migrate → deploy`.
 
 ### PWA
 
-- App installs from Chrome / Edge / Safari with the SVG icon and the
-  Hebrew RTL manifest.
+- App installs from Chrome / Edge / Safari with both the SVG vector icon
+  (PWA install prompt + Android maskable) and a 192/512 PNG pair.
+- iOS Safari "Add to Home Screen" uses `apple-touch-icon.png` (180×180,
+  pre-flattened on the brand slate-900).
 - `apps/web/public/service-worker.js` handles cache-first for the app
   shell + Vite-hashed assets and network-first for `/api/*`.
   Bump `CACHE_VERSION` in that file when shipping a breaking change.
-- One designer follow-up: drop a real `apple-touch-icon.png` (512×512)
-  into `apps/web/public/` and update the `<link rel="apple-touch-icon">`
-  in `apps/web/index.html`. The current SVG is a placeholder.
+- All three PNG icons rasterize from `apps/web/public/icon.svg` via
+  `apps/web/scripts/build-icons.mjs` (chained into `npm run build`).
+  Replacing the source SVG and re-running `npm run build:icons` updates
+  every output deterministically.
+
+### Audit pass against original requirements
+
+The Phase 8 audit checked the codebase against every quality gate from
+the bootstrap prompt §7 and every must-do bullet from the Phase 2–7
+handoff. Result:
+
+| Gate                                                      | Status |
+|-----------------------------------------------------------|--------|
+| `tsc --noEmit` clean                                      | ✅      |
+| ESLint clean (incl. onion `no-restricted-imports`)        | ✅      |
+| Unit tests green                                          | ✅ 114 |
+| Integration test gate                                     | ✅ wired in CI (Phase 8B) |
+| Migration round-trip                                      | ✅ scripts in `apps/api/package.json`; CI runs forward path |
+| Secret-scan gate                                          | ✅ gitleaks step (Phase 8C) |
+| Container vuln scan                                       | ⚠️ relies on Artifact Registry's automatic scan post-push |
+| First-time proctor flow (`/change-password`)              | ✅ page + route shipped (Phase 8A) |
+| PWA PNG icons (192 / 512 / Apple)                         | ✅ Phase 8D |
 
 ### Explicit non-goals retained from the original handoff
 

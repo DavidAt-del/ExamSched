@@ -21,6 +21,22 @@
       "nationalIdInvalid": "תעודת זהות חייבת להכיל 9 ספרות"
     }
   },
+  "auth": {
+    "changePassword": {
+      "heading": "החלפת סיסמה",
+      "intro": "יש להחליף את הסיסמה הזמנית בסיסמה אישית.",
+      "currentPassword": "הסיסמה הנוכחית",
+      "newPassword": "סיסמה חדשה",
+      "confirmPassword": "אימות סיסמה חדשה",
+      "submit": "שמירה",
+      "success": "הסיסמה הוחלפה. אנא התחבר/י מחדש עם הסיסמה החדשה.",
+      "errors": {
+        "invalidCurrent": "הסיסמה הנוכחית שגויה.",
+        "tooShort": "הסיסמה חייבת להכיל לפחות 6 תווים.",
+        "mismatch": "אימות הסיסמה אינו תואם."
+      }
+    }
+  },
   "calendar": {
     "heading": "זמינות לבחינות",
     "available": "זמין",

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { UserRole } from '@app/shared';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import { ChangePasswordPage } from '../features/auth/pages/ChangePasswordPage';
 import { ProctorHomePage } from '../features/availability/pages/ProctorHomePage';
 import { ProctorsPage } from '../features/admin/pages/ProctorsPage';
 import { ExamPeriodsPage } from '../features/admin/pages/ExamPeriodsPage';
@@ -41,6 +42,19 @@ export function AppRoutes(): JSX.Element {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {/*
+       * Change-password sits outside AppLayout: it's a forced single-purpose
+       * flow, so we deliberately omit the nav chrome that would let the user
+       * dodge the requirement by clicking elsewhere first.
+       */}
+      <Route
+        path="/change-password"
+        element={
+          <RequireAuth>
+            <ChangePasswordPage />
+          </RequireAuth>
+        }
+      />
       <Route
         path="/"
         element={

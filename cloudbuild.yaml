@@ -10,6 +10,9 @@ substitutions:
   _CLOUD_SQL_INSTANCE: ''
 
 options:
+  # Bumped from the default e2-medium so the Testcontainers Postgres in the
+  # integration step has headroom; the rest of the pipeline benefits too.
+  machineType: E2_HIGHCPU_8
   logging: CLOUD_LOGGING_ONLY
   env:
     - 'NODE_ENV=production'
@@ -22,6 +25,18 @@ steps:
       - -c
       - |
         npm ci --workspaces --include-workspace-root --no-audit --no-fund
+
+  - id: secret-scan
+    # Working-tree scan (--no-git): Cloud Build's checkout has no git history.
+    # Add allowlist entries to .gitleaks.toml for known-safe placeholders.
+    name: zricethezav/gitleaks:latest
+    entrypoint: gitleaks
+    args:
+      - detect
+      - --redact
+      - --no-git
+      - --source=.
+      - --config=.gitleaks.toml
 
   - id: lint
     name: node:22
@@ -37,6 +52,17 @@ steps:
     name: node:22
     entrypoint: npm
     args: ['run', 'test:unit']
+
+  - id: test-integration
+    # Reuse the dependencies installed in /workspace by the `install` step.
+    # This avoids installing Node via a remote script and keeps the step on
+    # the same pinned major Node version used elsewhere in the pipeline.
+    name: node:22
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        npm run test:integration --workspace @app/api
 
   - id: build-api-image
     name: gcr.io/cloud-builders/docker
