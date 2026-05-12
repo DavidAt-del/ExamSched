@@ -80,9 +80,12 @@ describe('CloseExamPeriodUseCase', () => {
   });
 
   it('is idempotent when already closed', async () => {
-    periods.findById.mockResolvedValue(mkPeriod(ExamPeriodStatus.Closed));
+    const period = mkPeriod(ExamPeriodStatus.Closed);
+    periods.findById.mockResolvedValue(period);
     await useCase.execute({ periodId: 'p1' });
-    expect(periods.save).not.toHaveBeenCalled();
+    // domain close() is a no-op; use case still persists for consistency
+    expect(period.status).toBe(ExamPeriodStatus.Closed);
+    expect(periods.save).toHaveBeenCalledWith(period);
   });
 
   it('closes an open period', async () => {

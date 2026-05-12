@@ -4,6 +4,7 @@ import type { IAssignmentRepository } from '../../../../application/ports/reposi
 import type { Assignment } from '../../../../domain/entities/Assignment.js';
 import { AssignmentOrmEntity } from '../entities/AssignmentOrmEntity.js';
 import { ExamOrmEntity } from '../entities/ExamOrmEntity.js';
+import { ExamPeriodOrmEntity } from '../entities/ExamPeriodOrmEntity.js';
 import { AssignmentMapper } from '../mappers/AssignmentMapper.js';
 
 @injectable()
@@ -44,16 +45,18 @@ export class TypeOrmAssignmentRepository implements IAssignmentRepository {
     return rows.map(AssignmentMapper.toDomain);
   }
 
-  public async hasFutureForUser(userId: string, fromDate: Date): Promise<boolean> {
-    const isoDate = fromDate.toISOString().slice(0, 10);
-    const count = await this.repo
-      .createQueryBuilder('a')
-      .innerJoin(ExamOrmEntity, 'e', 'e.id = a.exam_id')
-      .where('(a.opener_user_id = :userId OR a.regular_user_id = :userId)', { userId })
-      .andWhere('e.exam_date >= :isoDate', { isoDate })
-      .getCount();
-    return count > 0;
-  }
+   public async hasFutureForUser(userId: string, fromDate: Date): Promise<boolean> {
+     const isoDate = fromDate.toISOString().slice(0, 10);
+     const count = await this.repo
+       .createQueryBuilder('a')
+       .innerJoin(ExamOrmEntity, 'e', 'e.id = a.exam_id')
+       .innerJoin(ExamPeriodOrmEntity, 'ep', 'ep.id = e.period_id')
+       .where('(a.opener_user_id = :userId OR a.regular_user_id = :userId)', { userId })
+       .andWhere('e.exam_date >= :isoDate', { isoDate })
+       .andWhere('ep.status IN (:...statuses)', { statuses: ['scheduled', 'sent'] })
+       .getCount();
+     return count > 0;
+   }
 
   public async replaceForExam(examId: string, assignments: Assignment[]): Promise<void> {
     await this.dataSource.transaction(async (manager) => {

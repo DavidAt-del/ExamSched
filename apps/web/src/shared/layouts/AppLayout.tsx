@@ -9,6 +9,7 @@ export function AppLayout(): JSX.Element {
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
   const isAdmin = user?.role === UserRole.Admin || user?.role === UserRole.ExamStaff;
+  const isAdminOnly = user?.role === UserRole.Admin;
   const isProctor = user?.role === UserRole.Proctor;
 
   const navLinkClass = ({ isActive }: { isActive: boolean }): string =>
@@ -26,22 +27,24 @@ export function AppLayout(): JSX.Element {
                   {t('app.nav.calendar')}
                 </NavLink>
               ) : null}
-              {isAdmin ? (
-                <>
-                  <NavLink to="/admin/proctors" className={navLinkClass}>
-                    {t('app.nav.proctors')}
-                  </NavLink>
-                  <NavLink to="/admin/periods" className={navLinkClass}>
-                    {t('app.nav.periods')}
-                  </NavLink>
-                  <NavLink to="/admin/users" className={navLinkClass}>
-                    {t('app.nav.users')}
-                  </NavLink>
-                  <NavLink to="/admin/audit-log" className={navLinkClass}>
-                    {t('app.nav.auditLog')}
-                  </NavLink>
-                </>
-              ) : null}
+               {isAdmin ? (
+                 <>
+                   <NavLink to="/admin/proctors" className={navLinkClass}>
+                     {t('app.nav.proctors')}
+                   </NavLink>
+                   <NavLink to="/admin/periods" className={navLinkClass}>
+                     {t('app.nav.periods')}
+                   </NavLink>
+                   <NavLink to="/admin/users" className={navLinkClass}>
+                     {t('app.nav.users')}
+                   </NavLink>
+                   {isAdminOnly ? (
+                     <NavLink to="/admin/audit-log" className={navLinkClass}>
+                       {t('app.nav.auditLog')}
+                     </NavLink>
+                   ) : null}
+                 </>
+               ) : null}
             </nav>
           </div>
           <div className="flex items-center gap-3">

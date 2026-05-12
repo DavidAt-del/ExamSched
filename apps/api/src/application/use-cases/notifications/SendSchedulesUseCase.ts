@@ -190,8 +190,7 @@ export class SendSchedulesUseCase {
       }
     }
 
-    period.status = ExamPeriodStatus.Sent;
-    period.updatedAt = now;
+    period.markSent(now);
     await this.periods.save(period);
 
     await this.audit.log({

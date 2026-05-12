@@ -112,6 +112,17 @@ function PeriodPanel({ period }: { period: MyPeriodDto }): JSX.Element {
   const exams = period.exams;
   const hasSelections = exams.some((e) => e.myAvailability === true);
 
+  // Helper: convert Date to YYYY-MM-DD (local time)
+  const toISODate = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Memoize exam dates as a Set for fast lookup
+  const examDates = useMemo(() => new Set(exams.map((e) => e.examDate)), [exams]);
+
   const events = useMemo(
     () =>
       exams.map((e) => ({
@@ -171,6 +182,12 @@ function PeriodPanel({ period }: { period: MyPeriodDto }): JSX.Element {
               const exam = arg.event.extendedProps.exam as ExamSummaryDto;
               void onToggle(exam);
             }}
+            dayCellClassNames={(arg) =>
+              examDates.has(toISODate(arg.date))
+                ? []
+                : ['bg-slate-100', 'text-slate-400', 'cursor-not-allowed']
+            }
+            selectAllow={() => false}
             height="auto"
           />
         </div>

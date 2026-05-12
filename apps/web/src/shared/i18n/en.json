@@ -235,7 +235,8 @@
     "periodLocked": "This period is no longer accepting availability changes.",
     "selectedDates": {
       "title": "My selected dates",
-      "empty": "You have not marked availability for any exams in this period."
+      "empty": "You have not marked availability for any exams in this period.",
+      "notChosen": "Not chosen"
     },
     "submit": {
       "button": "Submit",

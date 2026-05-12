@@ -37,9 +37,23 @@ npm run dev:api
 
 # Run web
 npm run dev:web   # http://localhost:5173
+
+# Seed a real-like demo dataset
+npm run seed:demo --workspace @app/api
 ```
 
 The Vite dev server proxies `/api` to `http://localhost:8080`.
+
+Demo logins use **national ID** (not email):
+
+| Role       | National ID | Password    |
+|------------|-------------|-------------|
+| Admin      | `000000018` | `Admin1!23` |
+| Exam Staff | `000000026` | `Staff1!23` |
+| Proctor    | `000000034` | `123456`    |
+| Proctor    | `000000042` | `Pass1!23`  |
+| Proctor    | `000000050` | `Noa1!23`   |
+| Proctor    | `000000068` | `Amir1!23`  |
 
 ## Quality gates
 

@@ -114,14 +114,14 @@ export function AppRoutes(): JSX.Element {
             </RequireRole>
           }
         />
-        <Route
-          path="admin/audit-log"
-          element={
-            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
-              <AuditLogPage />
-            </RequireRole>
-          }
-        />
+         <Route
+           path="admin/audit-log"
+           element={
+             <RequireRole allowed={[UserRole.Admin]}>
+               <AuditLogPage />
+             </RequireRole>
+           }
+         />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

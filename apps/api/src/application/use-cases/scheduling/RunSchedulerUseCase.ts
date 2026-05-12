@@ -135,8 +135,7 @@ export class RunSchedulerUseCase {
 
     await this.assignments.replaceForPeriod(input.periodId, allAssignments);
 
-    period.status = ExamPeriodStatus.Scheduled;
-    period.updatedAt = this.clock.now();
+    period.markScheduled(this.clock.now());
     await this.periods.save(period);
 
     await this.audit.log({

@@ -14,9 +14,10 @@
     "test:integration": "vitest run --dir test/integration",
     "test:e2e": "vitest run --dir test/e2e",
     "test:watch": "vitest",
-    "migration:generate": "typeorm-ts-node-esm migration:generate -d src/infrastructure/persistence/typeorm/data-source.ts",
-    "migration:run": "typeorm-ts-node-esm migration:run -d src/infrastructure/persistence/typeorm/data-source.ts",
-    "migration:revert": "typeorm-ts-node-esm migration:revert -d src/infrastructure/persistence/typeorm/data-source.ts"
+    "seed:demo": "tsx scripts/seed-dev.ts",
+    "migration:generate": "tsx ../../node_modules/typeorm/cli.js migration:generate -d src/infrastructure/persistence/typeorm/migration-data-source.ts",
+    "migration:run": "tsx ../../node_modules/typeorm/cli.js migration:run -d src/infrastructure/persistence/typeorm/migration-data-source.ts",
+    "migration:revert": "tsx ../../node_modules/typeorm/cli.js migration:revert -d src/infrastructure/persistence/typeorm/migration-data-source.ts"
   },
   "dependencies": {
     "@app/shared": "*",

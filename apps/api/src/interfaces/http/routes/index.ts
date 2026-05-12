@@ -72,8 +72,8 @@ export function buildRouter(): Router {
   admin.get('/users', wrap(AdminController.listStaffUsers));
   admin.post('/users/:id/reset-password', wrap(AdminController.resetStaffPassword));
 
-  // ── Audit log ──────────────────────────────────────────────────────────
-  admin.get('/audit-log', wrap(AdminController.listAuditLog));
+   // ── Audit log ──────────────────────────────────────────────────────────
+   admin.get('/audit-log', requireRole(UserRole.Admin), wrap(AdminController.listAuditLog));
 
   // ── Notification log ───────────────────────────────────────────────────
   admin.get(
