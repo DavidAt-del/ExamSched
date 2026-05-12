@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ExamPeriodStatus } from '@app/shared';
+import { ExamCategory, ExamPeriodStatus } from '@app/shared';
 import { CreateExamPeriodUseCase } from '../../../../src/application/use-cases/admin/exam-period/CreateExamPeriodUseCase.js';
 import { CloseExamPeriodUseCase } from '../../../../src/application/use-cases/admin/exam-period/CloseExamPeriodUseCase.js';
 import { CreateExamUseCase } from '../../../../src/application/use-cases/admin/exam-period/CreateExamUseCase.js';
@@ -167,6 +167,7 @@ describe('DeleteExamUseCase', () => {
       startTime: '09:00:00',
       endTime: '12:00:00',
       classroomCount: 2,
+      category: ExamCategory.Standard,
     });
   }
 

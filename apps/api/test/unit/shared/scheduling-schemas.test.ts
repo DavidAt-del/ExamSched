@@ -59,6 +59,7 @@ describe('scheduling schemas', () => {
           { examId: '22222222-2222-2222-2222-222222222222', index: 0 },
           { examId: '22222222-2222-2222-2222-222222222222', index: 1 },
         ],
+        manualOnly: [],
       });
       expect(r.success).toBe(true);
     });

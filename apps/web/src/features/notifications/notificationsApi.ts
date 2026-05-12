@@ -1,4 +1,8 @@
-import type { SendSchedulesRequest, SendSchedulesResponse } from '@app/shared';
+import type {
+  NotificationLogResponse,
+  SendSchedulesRequest,
+  SendSchedulesResponse,
+} from '@app/shared';
 import { api } from '../../app/api';
 
 export const notificationsApi = api.injectEndpoints({
@@ -12,10 +16,20 @@ export const notificationsApi = api.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['ExamPeriod', 'Assignment'],
+      invalidatesTags: ['ExamPeriod', 'Assignment', 'NotificationLog'],
+    }),
+    getNotificationLog: build.query<
+      NotificationLogResponse,
+      { periodId: string; limit?: number; offset?: number }
+    >({
+      query: ({ periodId, limit = 50, offset = 0 }) => ({
+        url: `/admin/periods/${periodId}/notification-log`,
+        params: { limit, offset },
+      }),
+      providesTags: ['NotificationLog'],
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useSendSchedulesMutation } = notificationsApi;
+export const { useSendSchedulesMutation, useGetNotificationLogQuery } = notificationsApi;

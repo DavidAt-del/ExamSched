@@ -13,6 +13,6 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ['User', 'ExamPeriod', 'Exam', 'Availability', 'Assignment'],
+  tagTypes: ['User', 'ExamPeriod', 'Exam', 'Availability', 'Assignment', 'NotificationLog'],
   endpoints: () => ({}),
 });

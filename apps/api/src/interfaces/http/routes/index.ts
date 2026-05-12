@@ -75,6 +75,12 @@ export function buildRouter(): Router {
   // ── Audit log ──────────────────────────────────────────────────────────
   admin.get('/audit-log', wrap(AdminController.listAuditLog));
 
+  // ── Notification log ───────────────────────────────────────────────────
+  admin.get(
+    '/periods/:periodId/notification-log',
+    wrap(AdminController.listNotificationLog),
+  );
+
   // ── Scheduling ─────────────────────────────────────────────────────────
   admin.post('/periods/:periodId/schedule', wrap(SchedulingController.run));
   admin.get('/periods/:periodId/schedule', wrap(SchedulingController.view));
@@ -90,6 +96,7 @@ export function buildRouter(): Router {
     '/exams/:examId/classrooms/:idx',
     wrap(SchedulingController.manualOverride),
   );
+  admin.get('/exams/:examId/availability', wrap(SchedulingController.examAvailability));
 
   router.use('/admin', admin);
 

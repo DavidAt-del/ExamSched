@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { ExamPeriodStatus } from '@app/shared';
+import { ExamCategory, ExamPeriodStatus } from '@app/shared';
 import { Exam } from '../../../../domain/entities/Exam.js';
 import {
   InvariantViolationError,
@@ -25,6 +25,7 @@ export interface CreateExamInput {
   startTime: string; // HH:MM (no seconds)
   endTime: string; // HH:MM
   classroomCount: number;
+  category?: ExamCategory;
 }
 
 @injectable()
@@ -58,6 +59,7 @@ export class CreateExamUseCase {
       startTime: `${input.startTime}:00`,
       endTime: `${input.endTime}:00`,
       classroomCount: input.classroomCount,
+      category: input.category ?? ExamCategory.Standard,
     });
     await this.exams.save(exam);
     return exam;

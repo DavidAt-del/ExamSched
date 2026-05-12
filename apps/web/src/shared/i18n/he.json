@@ -119,6 +119,12 @@
         "startTime": "שעת התחלה",
         "endTime": "שעת סיום",
         "classroomCount": "מספר כיתות",
+        "category": {
+          "label": "סוג בחינה",
+          "standard": "רגילה",
+          "special_needs": "כיתת התאמות",
+          "oral": "בחינה בעל-פה"
+        },
         "deleteConfirm": {
           "title": "מחיקת בחינה",
           "description": "ניתן למחוק רק בחינות בתקופה פתוחה ללא תגובות מהמשגיחים."
@@ -130,6 +136,9 @@
       "run": "הרץ שיבוץ אוטומטי",
       "export": "ייצוא לאקסל",
       "empty": "אין בחינות בתקופה זו",
+      "manualOnlyBadge": "ידני בלבד",
+      "manualOnlyNote": "בחינות עם התאמות / בעל-פה ({{count}}) אינן משובצות אוטומטית — נדרש שיבוץ ידני.",
+      "notificationLogLink": "יומן שליחת הודעות",
       "runConfirm": {
         "title": "הרצת שיבוץ אוטומטי",
         "description": "הפעולה תייצר שיבוץ חדש ותחליף שיבוצים קיימים בתקופה. ההפעלה אינה הפיכה אך ניתן לערוך ידנית כל כיתה לאחריה."
@@ -139,7 +148,10 @@
         "opener": "פותח כיתה",
         "regular": "משגיח רגיל",
         "regularNone": "ללא משגיח שני",
-        "notes": "הערות"
+        "notes": "הערות",
+        "unavailableBadge": "לא זמין",
+        "confirmDespiteUnavailable": "אני מאשר/ת לשבץ למרות חוסר זמינות.",
+        "availabilityUnknown": "ללא תגובה"
       },
       "send": {
         "button": "שלח סידור עבודה",
@@ -165,6 +177,32 @@
       "resetConfirm": {
         "title": "איפוס סיסמה",
         "description": "תיווצר סיסמה זמנית עבור {{name}}. המשתמש יידרש להחליפה בכניסה הבאה."
+      }
+    },
+    "notificationLog": {
+      "title": "יומן שליחת הודעות",
+      "empty": "לא נשלחו עדיין הודעות לתקופה זו.",
+      "table": {
+        "sentAt": "מועד שליחה",
+        "recipient": "נמען",
+        "nationalId": "תעודת זהות",
+        "channel": "ערוץ",
+        "status": "סטטוס",
+        "error": "שגיאה"
+      },
+      "channel": {
+        "email": "דואל",
+        "sms": "SMS"
+      },
+      "status": {
+        "pending": "ממתין",
+        "sent": "נשלח",
+        "failed": "נכשל"
+      },
+      "pagination": {
+        "prev": "הקודם",
+        "next": "הבא",
+        "info": "מציג {{from}}–{{to}} מתוך {{total}}"
       }
     },
     "auditLog": {
@@ -210,6 +248,7 @@
     },
     "mySchedule": {
       "empty": "אין שיבוצים זמינים כרגע. תקבל הודעה לאחר שליחת הסידור על ידי מדור בחינות.",
+      "notAssigned": "לא שובצת לבחינות בתקופה זו",
       "opener": "פותח כיתה",
       "regular": "משגיח רגיל",
       "noPartner": "ללא שותף",

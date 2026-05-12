@@ -5,12 +5,15 @@ import {
   ManualOverrideRequestSchema,
   SendSchedulesRequestSchema,
   type AssignmentDto,
+  type ExamAvailabilityResponse,
+  type ManualOverrideResponse,
   type ScheduleResultDto,
   type ScheduleViewResponse,
   type SendSchedulesResponse,
 } from '@app/shared';
 import { RunSchedulerUseCase } from '../../../application/use-cases/scheduling/RunSchedulerUseCase.js';
 import { ManualOverrideAssignmentUseCase } from '../../../application/use-cases/scheduling/ManualOverrideAssignmentUseCase.js';
+import { ListExamAvailabilityUseCase } from '../../../application/use-cases/scheduling/ListExamAvailabilityUseCase.js';
 import { ScheduleViewUseCase } from '../../../application/use-cases/scheduling/ScheduleViewUseCase.js';
 import { ExportScheduleUseCase } from '../../../application/use-cases/scheduling/ExportScheduleUseCase.js';
 import { SendSchedulesUseCase } from '../../../application/use-cases/notifications/SendSchedulesUseCase.js';
@@ -18,6 +21,7 @@ import type { Assignment } from '../../../domain/entities/Assignment.js';
 import type { User } from '../../../domain/entities/User.js';
 
 const PeriodIdParamSchema = z.object({ periodId: z.string().uuid() });
+const ExamIdParamSchema = z.object({ examId: z.string().uuid() });
 const ExamClassroomParamSchema = z.object({
   examId: z.string().uuid(),
   idx: z.coerce.number().int().nonnegative(),
@@ -70,6 +74,7 @@ export class SchedulingController {
         examId: u.examId,
         index: u.index,
       })),
+      manualOnly: result.manualOnly.map((u) => ({ examId: u.examId, index: u.index })),
     };
     res.status(200).json(body);
   }
@@ -93,6 +98,7 @@ export class SchedulingController {
         startTime: exam.startTime.slice(0, 5),
         endTime: exam.endTime.slice(0, 5),
         classroomCount: exam.classroomCount,
+        category: exam.category,
         assignments: assignments.map((a) => toAssignmentDto(a, out.users)),
       })),
     };
@@ -104,7 +110,7 @@ export class SchedulingController {
     const body = ManualOverrideRequestSchema.parse(req.body);
     const actorId = req.auth!.sub;
     const useCase = container.resolve(ManualOverrideAssignmentUseCase);
-    await useCase.execute({
+    const result = await useCase.execute({
       actorId,
       examId,
       classroomIndex: idx,
@@ -112,7 +118,25 @@ export class SchedulingController {
       regularUserId: body.regularUserId,
       notes: body.notes,
     });
-    res.status(204).end();
+
+    // Response carries the bare assignment IDs; the UI refetches the schedule
+    // (which hydrates user names) after a successful override. The availability
+    // fields are the value the staff acted on, not the post-update state.
+    const out: ManualOverrideResponse = {
+      assignment: toAssignmentDto(result.assignment, new Map()),
+      openerAvailability: result.openerAvailability,
+      regularAvailability: result.regularAvailability,
+      assignedDespiteUnavailable: result.assignedDespiteUnavailable,
+    };
+    res.status(200).json(out);
+  }
+
+  public static async examAvailability(req: Request, res: Response): Promise<void> {
+    const { examId } = ExamIdParamSchema.parse(req.params);
+    const useCase = container.resolve(ListExamAvailabilityUseCase);
+    const out = await useCase.execute({ examId });
+    const body: ExamAvailabilityResponse = out;
+    res.json(body);
   }
 
   public static async exportSchedule(req: Request, res: Response): Promise<void> {

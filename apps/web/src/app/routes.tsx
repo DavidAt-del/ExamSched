@@ -8,6 +8,7 @@ import { ExamPeriodsPage } from '../features/admin/pages/ExamPeriodsPage';
 import { UsersPage } from '../features/admin/pages/UsersPage';
 import { AuditLogPage } from '../features/admin/pages/AuditLogPage';
 import { SchedulePage } from '../features/scheduling/pages/SchedulePage';
+import { NotificationLogPage } from '../features/notifications/pages/NotificationLogPage';
 import { useAppSelector } from './hooks';
 import { AppLayout } from '../shared/layouts/AppLayout';
 
@@ -94,6 +95,14 @@ export function AppRoutes(): JSX.Element {
           element={
             <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
               <SchedulePage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="admin/periods/:periodId/notification-log"
+          element={
+            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+              <NotificationLogPage />
             </RequireRole>
           }
         />

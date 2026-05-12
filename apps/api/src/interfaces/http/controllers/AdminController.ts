@@ -9,6 +9,8 @@ import {
   CreateExamRequestSchema,
   type AuditLogEntryDto,
   type AuditLogPageResponse,
+  type NotificationLogEntryDto,
+  type NotificationLogResponse,
   type ProctorListItem,
   type ProctorListResponse,
   type ExamPeriodDto,
@@ -34,6 +36,7 @@ import { ImportProctorsUseCase } from '../../../application/use-cases/admin/proc
 import { ListStaffUsersUseCase } from '../../../application/use-cases/admin/staff/ListStaffUsersUseCase.js';
 import { ResetStaffPasswordUseCase } from '../../../application/use-cases/admin/staff/ResetStaffPasswordUseCase.js';
 import { ListAuditLogUseCase } from '../../../application/use-cases/admin/audit/ListAuditLogUseCase.js';
+import { ListNotificationLogUseCase } from '../../../application/use-cases/notifications/ListNotificationLogUseCase.js';
 import { DomainError } from '../../../domain/errors/DomainError.js';
 import type { ImportProctorsResult } from '@app/shared';
 import type { User } from '../../../domain/entities/User.js';
@@ -82,6 +85,7 @@ function toExamDto(e: Exam): ExamDto {
     startTime: e.startTime.slice(0, 5),
     endTime: e.endTime.slice(0, 5),
     classroomCount: e.classroomCount,
+    category: e.category,
   };
 }
 
@@ -248,6 +252,37 @@ export class AdminController {
         targetId: it.targetId,
         payload: it.payload,
         createdAt: it.createdAt.toISOString(),
+      })),
+    };
+    res.json(body);
+  }
+
+  // ── Notification log ───────────────────────────────────────────────────
+
+  public static async listNotificationLog(req: Request, res: Response): Promise<void> {
+    const { periodId } = PeriodIdParamSchema.parse(req.params);
+    const QuerySchema = z.object({
+      limit: z.coerce.number().int().positive().max(200).default(50),
+      offset: z.coerce.number().int().nonnegative().default(0),
+    });
+    const q = QuerySchema.parse(req.query);
+    const useCase = container.resolve(ListNotificationLogUseCase);
+    const result = await useCase.execute({ periodId, limit: q.limit, offset: q.offset });
+    const body: NotificationLogResponse = {
+      total: result.total,
+      limit: q.limit,
+      offset: q.offset,
+      entries: result.rows.map<NotificationLogEntryDto>((r) => ({
+        id: r.id,
+        userId: r.userId,
+        periodId: r.periodId,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        nationalId: r.nationalId,
+        channel: r.channel,
+        status: r.status,
+        error: r.error,
+        sentAt: r.sentAt === null ? null : r.sentAt.toISOString(),
       })),
     };
     res.json(body);

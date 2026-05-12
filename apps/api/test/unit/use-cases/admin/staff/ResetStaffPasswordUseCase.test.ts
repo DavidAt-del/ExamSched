@@ -31,7 +31,6 @@ function mkUser(role: UserRole, opts: { active?: boolean } = {}): User {
 describe('ResetStaffPasswordUseCase', () => {
   let users: ReturnType<typeof makeUsers>;
   let hasher: { hash: ReturnType<typeof vi.fn>; verify: ReturnType<typeof vi.fn> };
-  let temp: { next: ReturnType<typeof vi.fn> };
   let audit: { log: ReturnType<typeof vi.fn> };
   let useCase: ResetStaffPasswordUseCase;
 
@@ -49,12 +48,10 @@ describe('ResetStaffPasswordUseCase', () => {
   beforeEach(() => {
     users = makeUsers();
     hasher = { hash: vi.fn().mockResolvedValue('hashed'), verify: vi.fn() };
-    temp = { next: vi.fn().mockReturnValue('AB23CD') };
     audit = { log: vi.fn() };
     useCase = new ResetStaffPasswordUseCase(
       users,
       hasher,
-      temp,
       { now: () => fixedNow },
       audit,
     );
@@ -83,13 +80,12 @@ describe('ResetStaffPasswordUseCase', () => {
     );
   });
 
-  it('returns the plaintext temporary password and audits the reset', async () => {
+  it('resets to the fixed default password and audits the reset', async () => {
     const user = mkUser(UserRole.ExamStaff);
     users.findById.mockResolvedValue(user);
     const out = await useCase.execute({ actorId: 'admin', userId: 'u1' });
-    expect(out.temporaryPassword).toBe('AB23CD');
-    expect(temp.next).toHaveBeenCalledWith(6);
-    expect(hasher.hash).toHaveBeenCalledWith('AB23CD');
+    expect(out.temporaryPassword).toBe('123456');
+    expect(hasher.hash).toHaveBeenCalledWith('123456');
     expect(user.passwordHash).toBe('hashed');
     expect(user.mustChangePassword).toBe(true);
     expect(users.save).toHaveBeenCalledWith(user);
@@ -102,6 +98,6 @@ describe('ResetStaffPasswordUseCase', () => {
       }),
     );
     const auditCall = audit.log.mock.calls[0]?.[0] as { payload?: unknown };
-    expect(JSON.stringify(auditCall.payload ?? {})).not.toContain('AB23CD');
+    expect(JSON.stringify(auditCall.payload ?? {})).not.toContain('123456');
   });
 });

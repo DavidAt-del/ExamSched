@@ -30,11 +30,16 @@ export class ExcelScheduleExporter implements IScheduleExporter {
     for (const [date, exams] of examsByDate) {
       const sheet = wb.addWorksheet(date);
       sheet.views = [{ rightToLeft: true }];
+      // 7 columns. Spec mandates ≥6 (classroom + opener name/id + regular
+      // name/id + notes). Keeping "בחינה" (time range) as a leading column
+      // preserves cross-row context within the date sheet.
       sheet.columns = [
         { header: 'בחינה', key: 'exam', width: 20 },
-        { header: 'כיתה', key: 'classroom', width: 8 },
-        { header: 'פותח', key: 'opener', width: 32 },
-        { header: 'משגיח', key: 'regular', width: 32 },
+        { header: 'מספר כיתה', key: 'classroom', width: 10 },
+        { header: 'שם פותח', key: 'openerName', width: 24 },
+        { header: 'ת"ז פותח', key: 'openerId', width: 14 },
+        { header: 'שם משגיח', key: 'regularName', width: 24 },
+        { header: 'ת"ז משגיח', key: 'regularId', width: 14 },
         { header: 'הערות', key: 'notes', width: 40 },
       ];
       sheet.getRow(1).font = { bold: true };
@@ -49,22 +54,25 @@ export class ExcelScheduleExporter implements IScheduleExporter {
           sheet.addRow({
             exam: examLabel,
             classroom: '—',
-            opener: '—',
-            regular: '—',
+            openerName: '—',
+            openerId: '—',
+            regularName: '—',
+            regularId: '—',
             notes: 'לא הוגדרו שיבוצים',
           });
           continue;
         }
 
         for (const a of assignments) {
+          const opener = input.usersById.get(a.openerUserId);
+          const regular = a.regularUserId === null ? undefined : input.usersById.get(a.regularUserId);
           sheet.addRow({
             exam: examLabel,
             classroom: a.classroomIndex + 1,
-            opener: formatUser(input.usersById.get(a.openerUserId)),
-            regular:
-              a.regularUserId === null
-                ? '—'
-                : formatUser(input.usersById.get(a.regularUserId)),
+            openerName: fullName(opener),
+            openerId: nationalId(opener),
+            regularName: a.regularUserId === null ? '–' : fullName(regular),
+            regularId: a.regularUserId === null ? '–' : nationalId(regular),
             notes: a.notes ?? '',
           });
         }
@@ -76,7 +84,12 @@ export class ExcelScheduleExporter implements IScheduleExporter {
   }
 }
 
-function formatUser(user: User | undefined): string {
-  if (!user) return '—';
-  return `${user.firstName} ${user.lastName} (${user.nationalId.toString()})`;
+function fullName(user: User | undefined): string {
+  if (!user) return '–';
+  return `${user.firstName} ${user.lastName}`;
+}
+
+function nationalId(user: User | undefined): string {
+  if (!user) return '–';
+  return user.nationalId.toString();
 }

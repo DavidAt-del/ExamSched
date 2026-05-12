@@ -47,9 +47,18 @@ export class ExcelProctorRowParser implements IProctorRowParser {
       mimeType === 'text/plain';
     const workbook = new ExcelJS.Workbook();
     if (isCsv) {
+      // Strip a UTF-8 BOM (EF BB BF) if present so the first column header
+      // doesn't get prefixed with the invisible BOM character.
+      const csvBuffer =
+        buffer.length >= 3 &&
+        buffer[0] === 0xef &&
+        buffer[1] === 0xbb &&
+        buffer[2] === 0xbf
+          ? buffer.subarray(3)
+          : buffer;
       // exceljs's CSV typings predate Node 22's Stream interface (missing
       // `compose`); the runtime contract is unchanged so we widen via unknown.
-      const stream = bufferToStream(buffer) as unknown;
+      const stream = bufferToStream(csvBuffer) as unknown;
       await workbook.csv.read(stream as Parameters<typeof workbook.csv.read>[0]);
     } else {
       // Node 22's Buffer is Buffer<ArrayBufferLike>; copy into a plain
@@ -103,9 +112,15 @@ function projectRow(raw: RawRow, rowNumber: number): ParsedProctorRow | null {
       422,
     );
   }
+  // Numeric Excel cells drop leading zeros: '012345678' becomes 12345678.
+  // Strip non-digits, then left-pad to 9 so the stored ID matches the
+  // original (`NationalId.create` continues to reject genuinely malformed
+  // values).
+  const digits = raw.nationalId.trim().replace(/\D/g, '');
+  const nationalId = digits.length > 0 && digits.length <= 9 ? digits.padStart(9, '0') : digits;
   return {
     rowNumber,
-    nationalId: raw.nationalId.trim(),
+    nationalId,
     firstName: raw.firstName.trim(),
     lastName: raw.lastName.trim(),
     phone: raw.phone ? raw.phone.trim() : null,

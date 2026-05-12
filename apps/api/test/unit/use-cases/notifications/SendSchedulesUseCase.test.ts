@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+  ExamCategory,
   ExamPeriodStatus,
   NotificationStatus,
   ProctorType,
@@ -45,6 +46,7 @@ function mkExam(): Exam {
     startTime: '09:00:00',
     endTime: '12:00:00',
     classroomCount: 1,
+    category: ExamCategory.Standard,
   });
 }
 
@@ -89,7 +91,7 @@ describe('SendSchedulesUseCase', () => {
   let exams: { findById: ReturnType<typeof vi.fn>; findOpenForProctor: ReturnType<typeof vi.fn>; findByPeriod: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; deleteById: ReturnType<typeof vi.fn> };
   let users: { findById: ReturnType<typeof vi.fn>; findByNationalId: ReturnType<typeof vi.fn>; findAllProctors: ReturnType<typeof vi.fn>; findAllStaff: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; deactivate: ReturnType<typeof vi.fn> };
   let assignments: { findByExam: ReturnType<typeof vi.fn>; findByPeriod: ReturnType<typeof vi.fn>; findByUser: ReturnType<typeof vi.fn>; hasFutureForUser: ReturnType<typeof vi.fn>; replaceForExam: ReturnType<typeof vi.fn>; replaceForPeriod: ReturnType<typeof vi.fn>; findByExamAndClassroom: ReturnType<typeof vi.fn>; saveOne: ReturnType<typeof vi.fn> };
-  let notifLog: { write: ReturnType<typeof vi.fn> };
+  let notifLog: { write: ReturnType<typeof vi.fn>; findByPeriod: ReturnType<typeof vi.fn> };
   let email: { send: ReturnType<typeof vi.fn> };
   let emailBuilder: { build: ReturnType<typeof vi.fn> };
   let audit: { log: ReturnType<typeof vi.fn> };
@@ -103,7 +105,7 @@ describe('SendSchedulesUseCase', () => {
     exams = { findById: vi.fn(), findOpenForProctor: vi.fn(), findByPeriod: vi.fn(), save: vi.fn(), deleteById: vi.fn() };
     users = { findById: vi.fn(), findByNationalId: vi.fn(), findAllProctors: vi.fn(), findAllStaff: vi.fn(), save: vi.fn(), deactivate: vi.fn() };
     assignments = { findByExam: vi.fn(), findByPeriod: vi.fn(), findByUser: vi.fn(), hasFutureForUser: vi.fn(), replaceForExam: vi.fn(), replaceForPeriod: vi.fn(), findByExamAndClassroom: vi.fn(), saveOne: vi.fn() };
-    notifLog = { write: vi.fn() };
+    notifLog = { write: vi.fn(), findByPeriod: vi.fn() };
     email = { send: vi.fn() };
     emailBuilder = {
       build: vi.fn((input: { user: { email: string | null }; period: { name: string }; items: unknown[] }) => ({

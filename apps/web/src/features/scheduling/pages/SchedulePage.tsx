@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import heLocale from '@fullcalendar/core/locales/he';
 import enLocale from '@fullcalendar/core/locales/en-gb';
-import { ExamPeriodStatus, type AssignmentDto, type ScheduleViewExamDto } from '@app/shared';
+import {
+  ExamCategory,
+  ExamPeriodStatus,
+  type AssignmentDto,
+  type ScheduleViewExamDto,
+} from '@app/shared';
 import {
   useGetScheduleQuery,
   useRunSchedulerMutation,
@@ -30,8 +35,8 @@ interface ClassroomEvent {
   };
 }
 
-function statusColor(a: AssignmentDto | null): string {
-  if (a === null) return '#dc2626'; // unfilled — red
+function statusColor(a: AssignmentDto | null, isManualOnly: boolean): string {
+  if (a === null) return isManualOnly ? '#9333ea' : '#dc2626'; // manual-only purple, unfilled red
   if (a.regular === null) return '#f59e0b'; // solo opener / fallback — amber
   return '#16a34a'; // opener + regular — green
 }
@@ -40,9 +45,11 @@ function eventTitle(
   exam: ScheduleViewExamDto,
   classroomIndex: number,
   a: AssignmentDto | null,
+  manualBadge: string,
 ): string {
   const room = `${classroomIndex + 1}`;
-  if (a === null) return `${room} • —`;
+  const isManualOnly = exam.category !== ExamCategory.Standard;
+  if (a === null) return `${room} • ${isManualOnly ? manualBadge : '—'}`;
   const opener = `${a.opener.firstName} ${a.opener.lastName}`;
   const regular =
     a.regular === null ? '?' : `${a.regular.firstName} ${a.regular.lastName}`;
@@ -64,20 +71,22 @@ export function SchedulePage(): JSX.Element {
     current: AssignmentDto | null;
   } | null>(null);
 
+  const manualBadge = t('admin.scheduling.manualOnlyBadge');
   const events = useMemo<ClassroomEvent[]>(() => {
     if (!data) return [];
     const result: ClassroomEvent[] = [];
     for (const exam of data.exams) {
+      const isManualOnly = exam.category !== ExamCategory.Standard;
       const byIndex = new Map<number, AssignmentDto>();
       for (const a of exam.assignments) byIndex.set(a.classroomIndex, a);
       for (let i = 0; i < exam.classroomCount; i += 1) {
         const a = byIndex.get(i) ?? null;
         result.push({
           id: `${exam.id}-${i}`,
-          title: eventTitle(exam, i, a),
+          title: eventTitle(exam, i, a, manualBadge),
           start: `${exam.examDate}T${exam.startTime}`,
           end: `${exam.examDate}T${exam.endTime}`,
-          backgroundColor: statusColor(a),
+          backgroundColor: statusColor(a, isManualOnly),
           borderColor: 'transparent',
           extendedProps: {
             examId: exam.id,
@@ -88,6 +97,13 @@ export function SchedulePage(): JSX.Element {
       }
     }
     return result;
+  }, [data, manualBadge]);
+
+  const manualOnlyCount = useMemo(() => {
+    if (!data) return 0;
+    return data.exams
+      .filter((e) => e.category !== ExamCategory.Standard)
+      .reduce((sum, e) => sum + e.classroomCount, 0);
   }, [data]);
 
   if (periodId.length === 0) return <p className="p-4">{t('common.error')}</p>;
@@ -129,8 +145,22 @@ export function SchedulePage(): JSX.Element {
           >
             {t('admin.scheduling.export')}
           </a>
+          {data?.period.status === ExamPeriodStatus.Sent ? (
+            <Link
+              to={`/admin/periods/${periodId}/notification-log`}
+              className="rounded border border-slate-300 px-3 py-1.5 hover:bg-slate-100"
+            >
+              {t('admin.scheduling.notificationLogLink')}
+            </Link>
+          ) : null}
         </div>
       </div>
+
+      {manualOnlyCount > 0 ? (
+        <p className="mb-3 rounded border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900">
+          {t('admin.scheduling.manualOnlyNote', { count: manualOnlyCount })}
+        </p>
+      ) : null}
 
       {events.length === 0 ? (
         <p className="rounded bg-white p-4 shadow">

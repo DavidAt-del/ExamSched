@@ -1,3 +1,4 @@
+import type { ExamCategory } from '@app/shared';
 import { InvariantViolationError } from '../errors/DomainError.js';
 
 export interface ExamProps {
@@ -7,6 +8,7 @@ export interface ExamProps {
   startTime: string; // HH:MM:SS
   endTime: string; // HH:MM:SS
   classroomCount: number;
+  category: ExamCategory;
 }
 
 export class Exam {
@@ -16,6 +18,7 @@ export class Exam {
   public readonly startTime: string;
   public readonly endTime: string;
   public readonly classroomCount: number;
+  public readonly category: ExamCategory;
 
   constructor(props: ExamProps) {
     if (!Number.isInteger(props.classroomCount) || props.classroomCount <= 0) {
@@ -30,5 +33,6 @@ export class Exam {
     this.startTime = props.startTime;
     this.endTime = props.endTime;
     this.classroomCount = props.classroomCount;
+    this.category = props.category;
   }
 }

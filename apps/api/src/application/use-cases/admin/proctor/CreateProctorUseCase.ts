@@ -20,6 +20,7 @@ import {
   IAuditLoggerToken,
   type IAuditLogger,
 } from '../../../ports/services/IAuditLogger.js';
+import { INITIAL_PASSWORD } from '../passwords.js';
 
 export interface CreateProctorInput {
   actorId: string;
@@ -30,10 +31,6 @@ export interface CreateProctorInput {
   email?: string | null | undefined;
   proctorType: ProctorType;
 }
-
-// Default initial password literal per the spec: "1 עד 6" → "123456".
-// Forced change on first login via mustChangePassword=true.
-const INITIAL_PASSWORD = '123456';
 
 @injectable()
 export class CreateProctorUseCase {

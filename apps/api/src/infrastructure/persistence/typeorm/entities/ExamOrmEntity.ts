@@ -1,4 +1,5 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import { ExamCategory } from '@app/shared';
 
 @Entity({ name: 'exams' })
 @Index('idx_exams_period', ['periodId'])
@@ -20,4 +21,12 @@ export class ExamOrmEntity {
 
   @Column('int', { name: 'classroom_count' })
   classroomCount!: number;
+
+  @Column({
+    type: 'enum',
+    enum: [ExamCategory.Standard, ExamCategory.SpecialNeeds, ExamCategory.Oral],
+    enumName: 'exam_category',
+    default: ExamCategory.Standard,
+  })
+  category!: ExamCategory;
 }

@@ -10,6 +10,7 @@ export class ExamMapper {
       startTime: row.startTime,
       endTime: row.endTime,
       classroomCount: row.classroomCount,
+      category: row.category,
     });
   }
 
@@ -20,6 +21,7 @@ export class ExamMapper {
     target.startTime = exam.startTime;
     target.endTime = exam.endTime;
     target.classroomCount = exam.classroomCount;
+    target.category = exam.category;
     return target;
   }
 }

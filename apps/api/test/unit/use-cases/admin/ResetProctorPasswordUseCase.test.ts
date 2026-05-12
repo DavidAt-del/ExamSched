@@ -31,7 +31,6 @@ function mkProctor(): User {
 describe('ResetProctorPasswordUseCase', () => {
   let users: ReturnType<typeof makeUsers>;
   let hasher: { hash: ReturnType<typeof vi.fn>; verify: ReturnType<typeof vi.fn> };
-  let temp: { next: ReturnType<typeof vi.fn> };
   let audit: { log: ReturnType<typeof vi.fn> };
   let useCase: ResetProctorPasswordUseCase;
 
@@ -49,12 +48,10 @@ describe('ResetProctorPasswordUseCase', () => {
   beforeEach(() => {
     users = makeUsers();
     hasher = { hash: vi.fn().mockResolvedValue('hashed'), verify: vi.fn() };
-    temp = { next: vi.fn().mockReturnValue('AB23CD') };
     audit = { log: vi.fn() };
     useCase = new ResetProctorPasswordUseCase(
       users,
       hasher,
-      temp,
       { now: () => fixedNow },
       audit,
     );
@@ -92,13 +89,12 @@ describe('ResetProctorPasswordUseCase', () => {
     expect(audit.log).not.toHaveBeenCalled();
   });
 
-  it('returns the plaintext temp password, forces a change, and audits without leaking the password', async () => {
+  it('resets to the fixed default password, forces a change, and audits', async () => {
     const user = mkProctor();
     users.findById.mockResolvedValue(user);
     const out = await useCase.execute({ actorId: 'admin', userId: 'u1' });
-    expect(out.temporaryPassword).toBe('AB23CD');
-    expect(temp.next).toHaveBeenCalledWith(6);
-    expect(hasher.hash).toHaveBeenCalledWith('AB23CD');
+    expect(out.temporaryPassword).toBe('123456');
+    expect(hasher.hash).toHaveBeenCalledWith('123456');
     expect(user.passwordHash).toBe('hashed');
     expect(user.mustChangePassword).toBe(true);
     expect(users.save).toHaveBeenCalledWith(user);
@@ -112,6 +108,6 @@ describe('ResetProctorPasswordUseCase', () => {
     );
     // Sanity: the recorded payload must not include the plaintext password.
     const auditCall = audit.log.mock.calls[0]?.[0] as { payload?: unknown };
-    expect(JSON.stringify(auditCall.payload ?? {})).not.toContain('AB23CD');
+    expect(JSON.stringify(auditCall.payload ?? {})).not.toContain('123456');
   });
 });

@@ -19,6 +19,13 @@ export const ExamPeriodStatus = {
 } as const;
 export type ExamPeriodStatus = (typeof ExamPeriodStatus)[keyof typeof ExamPeriodStatus];
 
+export const ExamCategory = {
+  Standard: 'standard',
+  SpecialNeeds: 'special_needs',
+  Oral: 'oral',
+} as const;
+export type ExamCategory = (typeof ExamCategory)[keyof typeof ExamCategory];
+
 export const NotificationChannel = {
   Email: 'email',
   Sms: 'sms',

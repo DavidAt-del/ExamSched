@@ -11,11 +11,8 @@ import {
   IPasswordHasherToken,
   type IPasswordHasher,
 } from '../../../ports/services/IPasswordHasher.js';
-import {
-  ITempPasswordGeneratorToken,
-  type ITempPasswordGenerator,
-} from '../../../ports/services/ITempPasswordGenerator.js';
 import { IClockToken, type IClock } from '../../../ports/services/IClock.js';
+import { INITIAL_PASSWORD } from '../passwords.js';
 import {
   IAuditLoggerToken,
   type IAuditLogger,
@@ -36,8 +33,6 @@ export class ResetProctorPasswordUseCase {
   constructor(
     @inject(IUserRepositoryToken) private readonly users: IUserRepository,
     @inject(IPasswordHasherToken) private readonly hasher: IPasswordHasher,
-    @inject(ITempPasswordGeneratorToken)
-    private readonly tempPasswords: ITempPasswordGenerator,
     @inject(IClockToken) private readonly clock: IClock,
     @inject(IAuditLoggerToken) private readonly audit: IAuditLogger,
   ) {}
@@ -48,17 +43,18 @@ export class ResetProctorPasswordUseCase {
     if (!user.isProctor()) {
       throw new ForbiddenError('Only proctor passwords can be reset through this endpoint');
     }
-    const temp = this.tempPasswords.next(6);
-    const hash = await this.hasher.hash(temp);
+    // Spec §10.5: reset to the fixed default password. `mustChangePassword` is
+    // set inside resetPassword(), so the user is forced to change it on
+    // next sign-in.
+    const hash = await this.hasher.hash(INITIAL_PASSWORD);
     user.resetPassword(hash, this.clock.now());
     await this.users.save(user);
-    // Never log the temporary password.
     await this.audit.log({
       actorId: input.actorId,
       action: 'proctor.password_reset',
       targetType: 'user',
       targetId: input.userId,
     });
-    return { temporaryPassword: temp };
+    return { temporaryPassword: INITIAL_PASSWORD };
   }
 }

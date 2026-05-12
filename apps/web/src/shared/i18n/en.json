@@ -119,6 +119,12 @@
         "startTime": "Start time",
         "endTime": "End time",
         "classroomCount": "Classroom count",
+        "category": {
+          "label": "Exam type",
+          "standard": "Standard",
+          "special_needs": "Special needs",
+          "oral": "Oral"
+        },
         "deleteConfirm": {
           "title": "Delete exam",
           "description": "Exams can only be deleted from an open period that has no proctor responses yet."
@@ -130,6 +136,9 @@
       "run": "Run automatic scheduler",
       "export": "Export to Excel",
       "empty": "No exams in this period",
+      "manualOnlyBadge": "Manual only",
+      "manualOnlyNote": "Special-needs / oral exams ({{count}}) are excluded from auto-scheduling — assign them manually.",
+      "notificationLogLink": "Notification log",
       "runConfirm": {
         "title": "Run scheduler",
         "description": "This regenerates the schedule for the period and overwrites any existing assignments. You can still adjust individual classrooms manually afterwards."
@@ -139,7 +148,10 @@
         "opener": "Opener",
         "regular": "Regular",
         "regularNone": "No regular",
-        "notes": "Notes"
+        "notes": "Notes",
+        "unavailableBadge": "Unavailable",
+        "confirmDespiteUnavailable": "Confirm assignment despite unavailability.",
+        "availabilityUnknown": "No response"
       },
       "send": {
         "button": "Send schedule",
@@ -165,6 +177,32 @@
       "resetConfirm": {
         "title": "Reset password",
         "description": "A temporary password will be generated for {{name}}. They will be required to change it on next sign-in."
+      }
+    },
+    "notificationLog": {
+      "title": "Notification log",
+      "empty": "No notifications have been sent for this period yet.",
+      "table": {
+        "sentAt": "Sent at",
+        "recipient": "Recipient",
+        "nationalId": "National ID",
+        "channel": "Channel",
+        "status": "Status",
+        "error": "Error"
+      },
+      "channel": {
+        "email": "Email",
+        "sms": "SMS"
+      },
+      "status": {
+        "pending": "Pending",
+        "sent": "Sent",
+        "failed": "Failed"
+      },
+      "pagination": {
+        "prev": "Previous",
+        "next": "Next",
+        "info": "Showing {{from}}–{{to}} of {{total}}"
       }
     },
     "auditLog": {
@@ -210,6 +248,7 @@
     },
     "mySchedule": {
       "empty": "No assignments yet. You'll be notified once the exam department publishes the schedule.",
+      "notAssigned": "You were not assigned to any exams in this period",
       "opener": "Opener",
       "regular": "Regular",
       "noPartner": "No partner",

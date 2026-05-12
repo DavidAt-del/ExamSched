@@ -12,8 +12,28 @@ export interface NotificationLogEntry {
   sentAt: Date | null;
 }
 
+export interface NotificationLogRow extends NotificationLogEntry {
+  firstName: string;
+  lastName: string;
+  nationalId: string;
+}
+
+export interface FindNotificationLogPage {
+  limit: number;
+  offset: number;
+}
+
+export interface FindNotificationLogResult {
+  rows: NotificationLogRow[];
+  total: number;
+}
+
 export interface INotificationLogRepository {
   write(entry: NotificationLogEntry): Promise<void>;
+  findByPeriod(
+    periodId: string,
+    page: FindNotificationLogPage,
+  ): Promise<FindNotificationLogResult>;
 }
 
 export const INotificationLogRepositoryToken = Symbol.for('INotificationLogRepository');

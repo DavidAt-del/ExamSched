@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExamPeriodStatus, ProctorType } from '../domain-enums/index.js';
+import { ExamCategory, ExamPeriodStatus, ProctorType } from '../domain-enums/index.js';
 import { NationalIdSchema } from './auth.js';
 
 const ProctorTypeSchema = z.enum([ProctorType.Opener, ProctorType.Regular]);
@@ -8,6 +8,11 @@ const ExamPeriodStatusSchema = z.enum([
   ExamPeriodStatus.Closed,
   ExamPeriodStatus.Scheduled,
   ExamPeriodStatus.Sent,
+]);
+const ExamCategorySchema = z.enum([
+  ExamCategory.Standard,
+  ExamCategory.SpecialNeeds,
+  ExamCategory.Oral,
 ]);
 
 // HH:MM 24-hour time. Backend persists as time(0); the wire format omits seconds.
@@ -94,6 +99,7 @@ export const CreateExamRequestSchema = z
     startTime: TimeOfDaySchema,
     endTime: TimeOfDaySchema,
     classroomCount: z.number().int().positive().max(200),
+    category: ExamCategorySchema.default(ExamCategory.Standard),
   })
   .strict()
   .refine((v) => v.startTime < v.endTime, {
@@ -109,6 +115,7 @@ export const ExamDtoSchema = z.object({
   startTime: TimeOfDaySchema,
   endTime: TimeOfDaySchema,
   classroomCount: z.number().int().positive(),
+  category: ExamCategorySchema,
 });
 export type ExamDto = z.infer<typeof ExamDtoSchema>;
 

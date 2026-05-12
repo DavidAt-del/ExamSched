@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UserRole, ProctorType, ExamPeriodStatus } from '@app/shared';
+import { UserRole, ProctorType, ExamPeriodStatus, ExamCategory } from '@app/shared';
 import { SubmitAvailabilityUseCase } from '../../../src/application/use-cases/availability/SubmitAvailabilityUseCase.js';
 import { User } from '../../../src/domain/entities/User.js';
 import { NationalId } from '../../../src/domain/value-objects/NationalId.js';
@@ -37,6 +37,7 @@ function mkExam() {
     startTime: '09:00:00',
     endTime: '12:00:00',
     classroomCount: 2,
+    category: ExamCategory.Standard,
   });
 }
 

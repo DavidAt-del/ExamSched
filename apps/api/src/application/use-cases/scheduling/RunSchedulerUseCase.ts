@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { ExamPeriodStatus } from '@app/shared';
+import { ExamCategory, ExamPeriodStatus } from '@app/shared';
 import {
   InvariantViolationError,
   NotFoundError,
@@ -53,6 +53,9 @@ export interface SchedulerUnfilled {
 export interface RunSchedulerOutput {
   assignments: Assignment[];
   unfilledClassrooms: SchedulerUnfilled[];
+  // Classrooms belonging to non-standard exams (special_needs / oral) that the
+  // auto-scheduler intentionally skips. Staff fill these via manual override.
+  manualOnly: SchedulerUnfilled[];
 }
 
 @injectable()
@@ -99,9 +102,18 @@ export class RunSchedulerUseCase {
 
     const allAssignments: Assignment[] = [];
     const unfilled: SchedulerUnfilled[] = [];
+    const manualOnly: SchedulerUnfilled[] = [];
     const shiftsByProctor = new Map<string, number>();
 
     for (const exam of exams) {
+      if (exam.category !== ExamCategory.Standard) {
+        // Per spec §7.4: special-needs and oral exams are excluded from the
+        // auto-scheduler. Their classrooms are reported as manual-only.
+        for (let i = 0; i < exam.classroomCount; i += 1) {
+          manualOnly.push({ examId: exam.id, index: i });
+        }
+        continue;
+      }
       const responses = await this.availability.findByExam(exam.id);
       const availableProctors = responses
         .filter((r) => r.available)
@@ -136,13 +148,14 @@ export class RunSchedulerUseCase {
         exams: exams.length,
         assigned: allAssignments.length,
         unfilled: unfilled.length,
+        manualOnly: manualOnly.length,
         // Variance computed only over proctors who actually got assigned —
         // matches the fairness rule from the spec (only the present pool).
         proctorsUsed: shiftsByProctor.size,
       },
     });
 
-    return { assignments: allAssignments, unfilledClassrooms: unfilled };
+    return { assignments: allAssignments, unfilledClassrooms: unfilled, manualOnly };
   }
 
 }

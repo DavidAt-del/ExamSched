@@ -6,11 +6,17 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import heLocale from '@fullcalendar/core/locales/he';
 import enLocale from '@fullcalendar/core/locales/en-gb';
-import { useGetMyScheduleQuery } from '../../proctor/proctorApi';
+import { ExamPeriodStatus } from '@app/shared';
+import { useGetMyPeriodsQuery, useGetMyScheduleQuery } from '../../proctor/proctorApi';
 
 export function MySchedulePage(): JSX.Element {
   const { t, i18n } = useTranslation();
   const { data, isLoading, isError } = useGetMyScheduleQuery();
+  // RTK Query dedupes — ProctorHomePage already loads this; no extra request.
+  const { data: periodsData } = useGetMyPeriodsQuery();
+  const hasSentSchedule = (periodsData?.periods ?? []).some(
+    (p) => p.status === ExamPeriodStatus.Sent,
+  );
 
   const events = useMemo(() => {
     if (!data) return [];
@@ -39,7 +45,9 @@ export function MySchedulePage(): JSX.Element {
   if (events.length === 0) {
     return (
       <p className="rounded bg-white p-4 shadow text-slate-600">
-        {t('proctor.mySchedule.empty')}
+        {hasSentSchedule
+          ? t('proctor.mySchedule.notAssigned')
+          : t('proctor.mySchedule.empty')}
       </p>
     );
   }

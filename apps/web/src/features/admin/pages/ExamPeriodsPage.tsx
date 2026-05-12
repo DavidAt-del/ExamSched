@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CreateExamPeriodRequestSchema,
   CreateExamRequestSchema,
+  ExamCategory,
   ExamPeriodStatus,
   type CreateExamPeriodRequest,
   type CreateExamRequest,
@@ -197,6 +198,7 @@ function PeriodExamsPanel(props: {
             <th className="text-start font-medium">{t('admin.periods.exams.startTime')}</th>
             <th className="text-start font-medium">{t('admin.periods.exams.endTime')}</th>
             <th className="text-start font-medium">{t('admin.periods.exams.classroomCount')}</th>
+            <th className="text-start font-medium">{t('admin.periods.exams.category.label')}</th>
             <th />
           </tr>
         </thead>
@@ -207,6 +209,7 @@ function PeriodExamsPanel(props: {
               <td className="py-1">{e.startTime}</td>
               <td className="py-1">{e.endTime}</td>
               <td className="py-1">{e.classroomCount}</td>
+              <td className="py-1">{t(`admin.periods.exams.category.${e.category}`)}</td>
               <td className="py-1 text-end">
                 {props.canModify ? (
                   <button
@@ -289,7 +292,13 @@ function NewExamDialog(props: {
     formState: { errors },
   } = useForm<CreateExamRequest>({
     resolver: zodResolver(CreateExamRequestSchema),
-    defaultValues: { examDate: '', startTime: '', endTime: '', classroomCount: 1 },
+    defaultValues: {
+      examDate: '',
+      startTime: '',
+      endTime: '',
+      classroomCount: 1,
+      category: ExamCategory.Standard,
+    },
   });
 
   return (
@@ -342,6 +351,20 @@ function NewExamDialog(props: {
             className="w-full rounded border border-slate-300 px-3 py-2"
             {...register('classroomCount', { valueAsNumber: true })}
           />
+        </Field>
+        <Field label={t('admin.periods.exams.category.label')} error={null}>
+          <select
+            className="w-full rounded border border-slate-300 px-3 py-2"
+            {...register('category')}
+          >
+            <option value={ExamCategory.Standard}>
+              {t('admin.periods.exams.category.standard')}
+            </option>
+            <option value={ExamCategory.SpecialNeeds}>
+              {t('admin.periods.exams.category.special_needs')}
+            </option>
+            <option value={ExamCategory.Oral}>{t('admin.periods.exams.category.oral')}</option>
+          </select>
         </Field>
         <DialogButtons isBusy={createState.isLoading} onCancel={props.onCancel} />
       </form>

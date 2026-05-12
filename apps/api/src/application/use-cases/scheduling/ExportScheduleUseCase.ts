@@ -21,6 +21,8 @@ import {
   IScheduleExporterToken,
   type IScheduleExporter,
 } from '../../ports/services/IScheduleExporter.js';
+import { IClockToken, type IClock } from '../../ports/services/IClock.js';
+import { slugifyPeriodName } from './slugifyPeriodName.js';
 
 export interface ExportScheduleInput {
   periodId: string;
@@ -42,6 +44,7 @@ export class ExportScheduleUseCase {
     @inject(IUserRepositoryToken) private readonly users: IUserRepository,
     @inject(IScheduleExporterToken)
     private readonly exporter: IScheduleExporter,
+    @inject(IClockToken) private readonly clock: IClock,
   ) {}
 
   public async execute(input: ExportScheduleInput): Promise<ExportScheduleOutput> {
@@ -80,9 +83,13 @@ export class ExportScheduleUseCase {
       assignmentsByExam,
       usersById,
     });
+    const slug = slugifyPeriodName(period.name);
+    // UTC YYYY-MM-DD. Avoids tz wiring; matches the rest of the API's date
+    // handling (ISO-8601 over the wire).
+    const ymd = this.clock.now().toISOString().slice(0, 10);
     return {
       buffer,
-      filename: `schedule-${period.id}.xlsx`,
+      filename: `schedule-${slug || period.id}-${ymd}.xlsx`,
     };
   }
 }

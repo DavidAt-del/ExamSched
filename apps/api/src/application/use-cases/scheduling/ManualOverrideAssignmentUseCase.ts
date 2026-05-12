@@ -25,6 +25,10 @@ import {
   type IAssignmentRepository,
 } from '../../ports/repositories/IAssignmentRepository.js';
 import {
+  IAvailabilityRepositoryToken,
+  type IAvailabilityRepository,
+} from '../../ports/repositories/IAvailabilityRepository.js';
+import {
   IAuditLoggerToken,
   type IAuditLogger,
 } from '../../ports/services/IAuditLogger.js';
@@ -38,6 +42,21 @@ export interface ManualOverrideInput {
   notes: string | null;
 }
 
+export type AvailabilityState = 'available' | 'unavailable' | 'unknown';
+
+export interface ManualOverrideOutput {
+  assignment: Assignment;
+  openerAvailability: AvailabilityState;
+  regularAvailability: AvailabilityState;
+  assignedDespiteUnavailable: { opener: boolean; regular: boolean };
+}
+
+function toState(value: boolean | undefined): AvailabilityState {
+  if (value === true) return 'available';
+  if (value === false) return 'unavailable';
+  return 'unknown';
+}
+
 @injectable()
 export class ManualOverrideAssignmentUseCase {
   constructor(
@@ -47,10 +66,12 @@ export class ManualOverrideAssignmentUseCase {
     @inject(IUserRepositoryToken) private readonly users: IUserRepository,
     @inject(IAssignmentRepositoryToken)
     private readonly assignments: IAssignmentRepository,
+    @inject(IAvailabilityRepositoryToken)
+    private readonly availability: IAvailabilityRepository,
     @inject(IAuditLoggerToken) private readonly audit: IAuditLogger,
   ) {}
 
-  public async execute(input: ManualOverrideInput): Promise<Assignment> {
+  public async execute(input: ManualOverrideInput): Promise<ManualOverrideOutput> {
     if (
       input.regularUserId !== null &&
       input.regularUserId === input.openerUserId
@@ -119,6 +140,23 @@ export class ManualOverrideAssignmentUseCase {
       );
     }
 
+    // Spec §8: a proctor MAY be assigned despite marking unavailable, but the
+    // operation is flagged in the audit payload and the response so the UI
+    // can require an explicit confirmation.
+    const responses = await this.availability.findByExam(input.examId);
+    const availabilityByUser = new Map<string, boolean>(
+      responses.map((r) => [r.userId, r.available]),
+    );
+    const openerAvailability = toState(availabilityByUser.get(input.openerUserId));
+    const regularAvailability =
+      input.regularUserId === null
+        ? 'unknown'
+        : toState(availabilityByUser.get(input.regularUserId));
+    const assignedDespiteUnavailable = {
+      opener: openerAvailability === 'unavailable',
+      regular: regularAvailability === 'unavailable',
+    };
+
     const before = {
       openerUserId: existing.openerUserId,
       regularUserId: existing.regularUserId,
@@ -146,9 +184,15 @@ export class ManualOverrideAssignmentUseCase {
           regularUserId: existing.regularUserId,
           manualOverride: existing.manualOverride,
         },
+        assignedDespiteUnavailable,
       },
     });
 
-    return existing;
+    return {
+      assignment: existing,
+      openerAvailability,
+      regularAvailability,
+      assignedDespiteUnavailable,
+    };
   }
 }

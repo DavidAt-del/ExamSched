@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { container } from 'tsyringe';
-import { ExamPeriodStatus, ProctorType, UserRole } from '@app/shared';
+import { ExamCategory, ExamPeriodStatus, ProctorType, UserRole } from '@app/shared';
 import { startTestDb, type TestDb } from '../integration/setup.js';
 import { registerDependencies } from '../../src/composition/container.js';
 import { buildApp } from '../../src/interfaces/http/app.js';
@@ -54,6 +54,7 @@ beforeAll(async () => {
     startTime: '09:00:00',
     endTime: '12:00:00',
     classroomCount: 2,
+    category: ExamCategory.Standard,
   });
 
   container.reset();

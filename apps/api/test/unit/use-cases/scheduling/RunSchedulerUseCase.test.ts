@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ExamPeriodStatus, ProctorType, UserRole } from '@app/shared';
+import { ExamCategory, ExamPeriodStatus, ProctorType, UserRole } from '@app/shared';
 import { RunSchedulerUseCase } from '../../../../src/application/use-cases/scheduling/RunSchedulerUseCase.js';
 import { GreedySchedulingEngine } from '../../../../src/infrastructure/scheduler/GreedySchedulingEngine.js';
 import { Exam } from '../../../../src/domain/entities/Exam.js';
@@ -30,7 +30,11 @@ function mkPeriod(status: ExamPeriodStatus = ExamPeriodStatus.Open): ExamPeriod 
   });
 }
 
-function mkExam(id = 'e1', classroomCount = 2): Exam {
+function mkExam(
+  id = 'e1',
+  classroomCount = 2,
+  category: ExamCategory = ExamCategory.Standard,
+): Exam {
   return new Exam({
     id,
     periodId: 'p1',
@@ -38,6 +42,7 @@ function mkExam(id = 'e1', classroomCount = 2): Exam {
     startTime: '09:00:00',
     endTime: '12:00:00',
     classroomCount,
+    category,
   });
 }
 
@@ -206,6 +211,36 @@ describe('RunSchedulerUseCase', () => {
         targetId: 'p1',
       }),
     );
+  });
+
+  it('excludes special-needs and oral exams from auto-scheduling; lists them as manualOnly', async () => {
+    const o1 = mkUser('u1', ProctorType.Opener, true, 0);
+    const r1 = mkUser('u2', ProctorType.Regular, true, 1);
+    periods.findById.mockResolvedValue(mkPeriod());
+    exams.findByPeriod.mockResolvedValue([
+      mkExam('e1', 1, ExamCategory.Standard),
+      mkExam('e2', 2, ExamCategory.SpecialNeeds),
+      mkExam('e3', 1, ExamCategory.Oral),
+    ]);
+    users.findAllProctors.mockResolvedValue([o1, r1]);
+    availability.findByExam.mockImplementation(async (examId: string) =>
+      examId === 'e1'
+        ? [mkAvailability('u1', 'e1', true), mkAvailability('u2', 'e1', true)]
+        : [],
+    );
+
+    const out = await useCase.execute({ periodId: 'p1', actorId: 'admin' });
+
+    expect(out.assignments).toHaveLength(1);
+    expect(out.assignments[0]?.examId).toBe('e1');
+    expect(out.manualOnly).toEqual([
+      { examId: 'e2', index: 0 },
+      { examId: 'e2', index: 1 },
+      { examId: 'e3', index: 0 },
+    ]);
+    // engine was not called for e2 / e3 — only e1's availability was queried
+    expect(availability.findByExam).toHaveBeenCalledTimes(1);
+    expect(availability.findByExam).toHaveBeenCalledWith('e1');
   });
 
   it('drops availability rows where available=false even if marked', async () => {

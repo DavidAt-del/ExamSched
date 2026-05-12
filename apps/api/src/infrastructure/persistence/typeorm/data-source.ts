@@ -13,6 +13,7 @@ import { Init1715000000000 } from './migrations/1715000000000-Init.js';
 import { AddIndexes1716000000000 } from './migrations/1716000000000-AddIndexes.js';
 import { NotificationIndexes1717000000000 } from './migrations/1717000000000-NotificationIndexes.js';
 import { AvailabilitySubmissions1718000000000 } from './migrations/1718000000000-AvailabilitySubmissions.js';
+import { ExamCategory1719000000000 } from './migrations/1719000000000-ExamCategory.js';
 
 export function buildDataSourceOptions(
   overrides: Partial<DataSourceOptions> = {},
@@ -43,6 +44,7 @@ export function buildDataSourceOptions(
       AddIndexes1716000000000,
       NotificationIndexes1717000000000,
       AvailabilitySubmissions1718000000000,
+      ExamCategory1719000000000,
     ],
     migrationsRun: false,
   };

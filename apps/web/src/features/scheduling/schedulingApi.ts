@@ -1,5 +1,7 @@
 import type {
+  ExamAvailabilityResponse,
   ManualOverrideRequest,
+  ManualOverrideResponse,
   ScheduleResultDto,
   ScheduleViewResponse,
 } from '@app/shared';
@@ -20,7 +22,7 @@ export const schedulingApi = api.injectEndpoints({
       providesTags: ['Assignment'],
     }),
     manualOverrideAssignment: build.mutation<
-      void,
+      ManualOverrideResponse,
       { examId: string; classroomIndex: number; body: ManualOverrideRequest }
     >({
       query: ({ examId, classroomIndex, body }) => ({
@@ -30,6 +32,9 @@ export const schedulingApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Assignment'],
     }),
+    getExamAvailability: build.query<ExamAvailabilityResponse, string>({
+      query: (examId) => `/admin/exams/${examId}/availability`,
+    }),
   }),
   overrideExisting: false,
 });
@@ -38,4 +43,5 @@ export const {
   useRunSchedulerMutation,
   useGetScheduleQuery,
   useManualOverrideAssignmentMutation,
+  useGetExamAvailabilityQuery,
 } = schedulingApi;

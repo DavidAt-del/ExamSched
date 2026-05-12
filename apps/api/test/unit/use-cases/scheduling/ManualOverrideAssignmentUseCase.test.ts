@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ExamPeriodStatus, ProctorType, UserRole } from '@app/shared';
+import { ExamCategory, ExamPeriodStatus, ProctorType, UserRole } from '@app/shared';
 import { ManualOverrideAssignmentUseCase } from '../../../../src/application/use-cases/scheduling/ManualOverrideAssignmentUseCase.js';
 import { Assignment } from '../../../../src/domain/entities/Assignment.js';
 import { Exam } from '../../../../src/domain/entities/Exam.js';
@@ -36,6 +36,7 @@ function mkExam(): Exam {
     startTime: '09:00:00',
     endTime: '12:00:00',
     classroomCount: 1,
+    category: ExamCategory.Standard,
   });
 }
 
@@ -80,6 +81,7 @@ describe('ManualOverrideAssignmentUseCase', () => {
   let periods: { findById: ReturnType<typeof vi.fn>; findAll: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; deleteById: ReturnType<typeof vi.fn> };
   let users: { findById: ReturnType<typeof vi.fn>; findByNationalId: ReturnType<typeof vi.fn>; findAllProctors: ReturnType<typeof vi.fn>; findAllStaff: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn>; deactivate: ReturnType<typeof vi.fn> };
   let assignments: { findByExam: ReturnType<typeof vi.fn>; findByPeriod: ReturnType<typeof vi.fn>; findByUser: ReturnType<typeof vi.fn>; hasFutureForUser: ReturnType<typeof vi.fn>; replaceForExam: ReturnType<typeof vi.fn>; replaceForPeriod: ReturnType<typeof vi.fn>; findByExamAndClassroom: ReturnType<typeof vi.fn>; saveOne: ReturnType<typeof vi.fn> };
+  let availability: { findByUserAndExam: ReturnType<typeof vi.fn>; findByUser: ReturnType<typeof vi.fn>; findByExam: ReturnType<typeof vi.fn>; countAvailableForExam: ReturnType<typeof vi.fn>; save: ReturnType<typeof vi.fn> };
   let audit: { log: ReturnType<typeof vi.fn> };
   let useCase: ManualOverrideAssignmentUseCase;
 
@@ -88,8 +90,9 @@ describe('ManualOverrideAssignmentUseCase', () => {
     periods = { findById: vi.fn(), findAll: vi.fn(), save: vi.fn(), deleteById: vi.fn() };
     users = { findById: vi.fn(), findByNationalId: vi.fn(), findAllProctors: vi.fn(), findAllStaff: vi.fn(), save: vi.fn(), deactivate: vi.fn() };
     assignments = { findByExam: vi.fn(), findByPeriod: vi.fn(), findByUser: vi.fn(), hasFutureForUser: vi.fn(), replaceForExam: vi.fn(), replaceForPeriod: vi.fn(), findByExamAndClassroom: vi.fn(), saveOne: vi.fn() };
+    availability = { findByUserAndExam: vi.fn(), findByUser: vi.fn(), findByExam: vi.fn().mockResolvedValue([]), countAvailableForExam: vi.fn(), save: vi.fn() };
     audit = { log: vi.fn() };
-    useCase = new ManualOverrideAssignmentUseCase(exams, periods, users, assignments, audit);
+    useCase = new ManualOverrideAssignmentUseCase(exams, periods, users, assignments, availability, audit);
   });
 
   it('rejects when opener and regular are the same user', async () => {
@@ -206,15 +209,55 @@ describe('ManualOverrideAssignmentUseCase', () => {
       notes: 'special needs accommodation',
     });
 
-    expect(out.openerUserId).toBe('u-new-opener');
-    expect(out.regularUserId).toBe('u-new-regular');
-    expect(out.manualOverride).toBe(true);
-    expect(out.notes).toBe('special needs accommodation');
+    expect(out.assignment.openerUserId).toBe('u-new-opener');
+    expect(out.assignment.regularUserId).toBe('u-new-regular');
+    expect(out.assignment.manualOverride).toBe(true);
+    expect(out.assignment.notes).toBe('special needs accommodation');
+    expect(out.openerAvailability).toBe('unknown');
+    expect(out.regularAvailability).toBe('unknown');
+    expect(out.assignedDespiteUnavailable).toEqual({ opener: false, regular: false });
     expect(assignments.saveOne).toHaveBeenCalledWith(existing);
     expect(audit.log).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'assignment.manual_override',
         targetType: 'assignment',
+        payload: expect.objectContaining({
+          assignedDespiteUnavailable: { opener: false, regular: false },
+        }),
+      }),
+    );
+  });
+
+  it('flags assigning a proctor who marked themselves unavailable', async () => {
+    const existing = mkAssignment();
+    exams.findById.mockResolvedValue(mkExam());
+    periods.findById.mockResolvedValue(mkPeriod());
+    assignments.findByExamAndClassroom.mockResolvedValue(existing);
+    users.findById
+      .mockResolvedValueOnce(mkUser('u-new-opener', UserRole.Proctor, ProctorType.Opener, true, idA))
+      .mockResolvedValueOnce(mkUser('u-new-regular', UserRole.Proctor, ProctorType.Regular, true, idB));
+    availability.findByExam.mockResolvedValue([
+      { userId: 'u-new-opener', available: false },
+      { userId: 'u-new-regular', available: true },
+    ]);
+
+    const out = await useCase.execute({
+      actorId: 'admin',
+      examId: 'e1',
+      classroomIndex: 0,
+      openerUserId: 'u-new-opener',
+      regularUserId: 'u-new-regular',
+      notes: null,
+    });
+
+    expect(out.openerAvailability).toBe('unavailable');
+    expect(out.regularAvailability).toBe('available');
+    expect(out.assignedDespiteUnavailable).toEqual({ opener: true, regular: false });
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          assignedDespiteUnavailable: { opener: true, regular: false },
+        }),
       }),
     );
   });
