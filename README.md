@@ -26,20 +26,21 @@ proctor-scheduler/
 ## Local development
 
 ```bash
-# Start Postgres
+# Start Postgres (Docker Desktop / Docker Engine on any OS)
 docker compose up -d postgres
 
 # Install workspaces
 npm install
 
-# Run API (with auto-migration on boot)
+# Seed a realistic demo dataset
+npm run seed:demo
+
+# Run API + web together from the repo root
+npm run dev:demo
+
+# Or start them separately from the repo root
 npm run dev:api
-
-# Run web
-npm run dev:web   # http://localhost:5173
-
-# Seed a real-like demo dataset
-npm run seed:demo --workspace @app/api
+npm run dev:web
 ```
 
 The Vite dev server proxies `/api` to `http://localhost:8080`.
@@ -54,6 +55,9 @@ Demo logins use **national ID** (not email):
 | Proctor    | `000000042` | `Pass1!23`  |
 | Proctor    | `000000050` | `Noa1!23`   |
 | Proctor    | `000000068` | `Amir1!23`  |
+
+`npm run dev:demo` is a small Node launcher (`scripts/dev-demo.mjs`) so it
+works the same on Linux, macOS, and Windows.
 
 ## Quality gates
 

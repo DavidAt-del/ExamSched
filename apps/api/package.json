@@ -14,7 +14,7 @@
     "test:integration": "vitest run --dir test/integration",
     "test:e2e": "vitest run --dir test/e2e",
     "test:watch": "vitest",
-    "seed:demo": "tsx scripts/seed-dev.ts",
+    "seed:demo": "node scripts/seed-dev.mjs",
     "migration:generate": "tsx ../../node_modules/typeorm/cli.js migration:generate -d src/infrastructure/persistence/typeorm/migration-data-source.ts",
     "migration:run": "tsx ../../node_modules/typeorm/cli.js migration:run -d src/infrastructure/persistence/typeorm/migration-data-source.ts",
     "migration:revert": "tsx ../../node_modules/typeorm/cli.js migration:revert -d src/infrastructure/persistence/typeorm/migration-data-source.ts"

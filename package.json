@@ -19,6 +19,8 @@
     "build": "npm run build --workspaces --if-present",
     "dev:api": "npm --workspace @app/api run dev",
     "dev:web": "npm --workspace @app/web run dev",
+    "dev:demo": "node scripts/dev-demo.mjs",
+    "seed:demo": "npm --workspace @app/api run seed:demo",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\""
   },
   "devDependencies": {
