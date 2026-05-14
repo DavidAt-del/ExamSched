@@ -1,6 +1,31 @@
 # GitHub Workflows and Environments
 
-This repository ships with GitHub Actions workflows for validation, HTML docs publishing, and GCP deployment.
+This repository ships with GitHub Actions workflows for validation, HTML docs publishing, GCP deployment, and workflow-run cleanup.
+
+## Workflow graph
+
+The repository is wired as a gradual promotion graph:
+
+```text
+pull_request / push
+  -> CI
+       -> static checks
+       -> seed/bootstrap smoke
+       -> unit tests
+       -> integration tests
+       -> build
+       -> docs artifact
+
+successful CI on main
+  -> Publish docs
+
+successful CI on develop or main
+  -> Deploy to GCP (staging)
+
+manual dispatch
+  -> Deploy to GCP (staging or production)
+  -> Cleanup workflow runs
+```
 
 ## Included workflows
 
@@ -8,21 +33,22 @@ This repository ships with GitHub Actions workflows for validation, HTML docs pu
 
 Runs on pushes to `main` and `develop`, and on every pull request.
 
-It performs:
+It performs the following gated jobs:
 
-- `npm ci --workspaces --include-workspace-root --no-audit --no-fund`
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test:unit`
-- `npm run test:integration`
-- `npm run build`
-- `npm run docs:api`
+- `Static checks`: installs dependencies, then runs `npm run lint` and `npm run typecheck`
+- `Seed and bootstrap smoke`: validates the seeding and GCP bootstrap CLIs with:
+  - `npm run seed:mocker -- --help`
+  - `npm run setup:gcp -- --help`
+- `Unit tests`: runs `npm run test:unit`
+- `Integration tests`: runs `npm run test:integration`
+- `Build application`: runs `npm run build`
+- `Generate docs artifact`: runs `npm run docs:api`
 
 The generated TypeDoc site is uploaded as a workflow artifact named `api-reference-html`.
 
 ### `/.github/workflows/docs.yml`
 
-Runs on pushes to `main` and manually via `workflow_dispatch`.
+Runs after successful `CI` runs on `main`, and manually via `workflow_dispatch`.
 
 It builds the TypeDoc site and deploys `docs/reference/html/` to GitHub Pages.
 
@@ -36,12 +62,12 @@ the manual fallback:
 
 ### `/.github/workflows/deploy-gcp.yml`
 
-GCP deployment workflow triggered by pushes and manual dispatch.
+GCP deployment workflow triggered by successful `CI` runs and manual dispatch.
 
-It runs automatically on pushes to:
+It runs automatically after successful `CI` runs for:
 
-- `main` → `staging`
 - `develop` → `staging`
+- `main` → `staging`
 
 Production is intentionally manual-only. Select `production` from the Actions UI
 and enter `deploy` in `confirm_production`.
@@ -53,10 +79,27 @@ It:
 3. authenticates to Google Cloud using GitHub OIDC and Workload Identity Federation
 4. submits the repository's `cloudbuild.yaml` pipeline with the correct substitutions
 
-Push-triggered deployments use the `staging` GitHub Environment variables.
+Automatic deployments use the `staging` GitHub Environment variables.
 Production deploys require the operator to type `deploy` into the
 `confirm_production` input and should be protected with GitHub Environment
 reviewers.
+
+### `/.github/workflows/cleanup-runs.yml`
+
+Maintenance workflow that deletes successful completed workflow runs older than a
+retention window.
+
+It runs:
+
+- nightly on a schedule
+- manually via `workflow_dispatch`
+
+The manual inputs are:
+
+- `retention_days`: defaults to `14`
+- `dry_run`: defaults to `true`
+
+Use the manual dispatch first in `dry_run` mode to confirm the runs that would be deleted.
 
 ## Recommended GitHub Environments
 
@@ -160,14 +203,14 @@ transferred again.
 ## Push deploy flow
 
 After Terraform has been applied and `npm run sync:github-env` has populated the
-`staging` environment, deployment runs automatically when code is pushed to
+`staging` environment, deployment runs automatically only after `CI` succeeds on
 `main` or `develop`.
 
-The push-triggered path is:
+The automatic path is:
 
-1. `CI` validates the repository
-2. `Publish docs` regenerates GitHub Pages from TypeDoc
-3. `Deploy to GCP` submits `cloudbuild.yaml` to Cloud Build using the `staging` environment variables
+1. `CI` validates the repository and produces the docs artifact
+2. `Publish docs` regenerates GitHub Pages from TypeDoc when `main` passes `CI`
+3. `Deploy to GCP` submits `cloudbuild.yaml` to Cloud Build using the `staging` environment variables when `main` or `develop` passes `CI`
 
 ## Manual deploy flow
 

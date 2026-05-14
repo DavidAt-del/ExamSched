@@ -1,0 +1,83 @@
+name: Cleanup workflow runs
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      retention_days:
+        description: Delete successful completed runs older than this many days
+        required: false
+        default: '14'
+        type: string
+      dry_run:
+        description: Preview deletions without removing runs
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete old successful runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete completed successful runs older than retention window
+        uses: actions/github-script@v7
+        env:
+          RETENTION_DAYS: ${{ inputs.retention_days || '14' }}
+          DRY_RUN: ${{ inputs.dry_run == true && 'true' || 'false' }}
+        with:
+          script: |
+            const retentionDays = Number(process.env.RETENTION_DAYS || '14');
+            const dryRun = (process.env.DRY_RUN || 'false') === 'true';
+            const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+            let page = 1;
+            let deleted = 0;
+            let matched = 0;
+
+            while (true) {
+              const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                status: 'completed',
+                per_page: 100,
+                page,
+              });
+
+              if (!runs.workflow_runs.length) {
+                break;
+              }
+
+              for (const run of runs.workflow_runs) {
+                const createdAt = new Date(run.created_at).getTime();
+                if (run.conclusion !== 'success' || createdAt > cutoff) {
+                  continue;
+                }
+
+                matched += 1;
+                core.info(`${dryRun ? '[dry-run] ' : ''}delete run ${run.id} (${run.name}) created ${run.created_at}`);
+                if (!dryRun) {
+                  await github.rest.actions.deleteWorkflowRun({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: run.id,
+                  });
+                  deleted += 1;
+                }
+              }
+
+              page += 1;
+            }
+
+            core.summary
+              .addHeading('Workflow cleanup summary')
+              .addRaw(`Retention days: ${retentionDays}\n`)
+              .addRaw(`Dry run: ${dryRun}\n`)
+              .addRaw(`Matched successful runs: ${matched}\n`)
+              .addRaw(`Deleted runs: ${deleted}\n`)
+              .write();
+
