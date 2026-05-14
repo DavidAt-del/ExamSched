@@ -53,7 +53,7 @@ resource "google_project_iam_member" "github_actions_service_usage_consumer" {
 
 resource "google_project_iam_member" "github_actions_source_upload" {
   project = var.project_id
-  role    = "roles/storage.objectAdmin"
+  role    = "roles/storage.admin"
   member  = "serviceAccount:${google_service_account.github_actions_deploy.email}"
 }
 
