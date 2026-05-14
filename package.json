@@ -23,7 +23,8 @@
     "dev:demo": "node scripts/dev-demo.mjs",
     "seed:demo": "npm --workspace @app/api run seed:demo",
     "seed:mocker": "npm --workspace @app/api run seed:mocker",
-    "setup:gcp": "npm --workspace @app/api run setup:gcp",
+    "setup:gcp": "npm --workspace @app/api run setup:gcp --",
+    "sync:github-env": "node scripts/sync-github-env.mjs",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\""
   },
   "devDependencies": {

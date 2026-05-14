@@ -83,7 +83,18 @@ terraform apply
 terraform output
 ```
 
-Use the Terraform outputs to validate the generated names and to wire Cloud Build.
+Use the Terraform outputs to validate the generated names and to wire Cloud Build / GitHub Actions.
+
+If you deploy through GitHub Actions, sync those outputs directly into the
+target GitHub Environment:
+
+```bash
+npm run sync:github-env -- \
+  --repo DavidAt-del/ExamSched \
+  --environment staging \
+  --project-id your-gcp-project-id \
+  --region us-central1
+```
 
 ## Secrets required after Terraform
 
@@ -121,11 +132,13 @@ This repository also includes GitHub Actions workflows under `/.github/workflows
 
 - `ci.yml` — validation on pushes and pull requests
 - `docs.yml` — publishes `docs/reference/html/` to GitHub Pages
-- `deploy-gcp.yml` — manual deploy to GCP by submitting `cloudbuild.yaml`
+- `deploy-gcp.yml` — deploys to GCP by submitting `cloudbuild.yaml`
 
 If you want GitHub to orchestrate deployments instead of relying only on a
 native Cloud Build trigger, configure GitHub Environments and OIDC as described
-in `docs/github-workflows.md`.
+in `docs/github-workflows.md`. After the `staging` environment is populated,
+pushes to `main` or `develop` deploy to staging automatically. Production
+deployments remain manual-only by default.
 
 ## Relationship to runtime `.env`
 

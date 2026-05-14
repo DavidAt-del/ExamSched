@@ -1,6 +1,10 @@
 name: Deploy to GCP
 
 on:
+  push:
+    branches:
+      - main
+      - develop
   workflow_dispatch:
     inputs:
       environment:
@@ -27,7 +31,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: deploy-${{ inputs.environment }}
+  group: deploy-${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }}
   cancel-in-progress: false
 
 jobs:
@@ -35,15 +39,16 @@ jobs:
     name: Cloud Build deploy
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment: ${{ inputs.environment }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.git_ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.git_ref || github.sha }}
 
       - name: Guard production deploys
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           set -euo pipefail
@@ -112,7 +117,9 @@ jobs:
         id: meta
         shell: bash
         run: |
-          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          DEPLOY_SHA="$(git rev-parse HEAD)"
+          echo "deploy_sha=${DEPLOY_SHA}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${DEPLOY_SHA::7}" >> "$GITHUB_OUTPUT"
 
       - name: Authenticate to Google Cloud via OIDC
         uses: google-github-actions/auth@v2
@@ -135,5 +142,5 @@ jobs:
           gcloud builds submit \
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --config cloudbuild.yaml \
-            --substitutions "SHORT_SHA=${SHORT_SHA},COMMIT_SHA=${GITHUB_SHA},_REGION=${{ vars.GCP_REGION }},_ENV=${{ inputs.environment }},_AR_REPO=${{ vars.GCP_AR_REPO }},_DB_NAME=${{ vars.GCP_DB_NAME }},_API_SERVICE_ACCOUNT_ID=${{ vars.GCP_API_SERVICE_ACCOUNT_ID }},_WEB_SERVICE_ACCOUNT_ID=${{ vars.GCP_WEB_SERVICE_ACCOUNT_ID }},_API_SERVICE_NAME=${{ vars.GCP_API_SERVICE_NAME }},_WEB_SERVICE_NAME=${{ vars.GCP_WEB_SERVICE_NAME }},_MIGRATION_JOB_NAME=${{ vars.GCP_MIGRATION_JOB_NAME }},_VPC_NAME=${{ vars.GCP_VPC_NAME }},_SUBNET_NAME=${{ vars.GCP_SUBNET_NAME }},_JWT_SECRET_NAME=${{ vars.GCP_JWT_SECRET_NAME }},_SENDGRID_SECRET_NAME=${{ vars.GCP_SENDGRID_SECRET_NAME }},_EMAIL_FROM_SECRET_NAME=${{ vars.GCP_EMAIL_FROM_SECRET_NAME }},_CLOUD_SQL_INSTANCE=${{ vars.GCP_CLOUD_SQL_INSTANCE }}" \
+            --substitutions "SHORT_SHA=${SHORT_SHA},COMMIT_SHA=${{ steps.meta.outputs.deploy_sha }},_REGION=${{ vars.GCP_REGION }},_ENV=${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }},_AR_REPO=${{ vars.GCP_AR_REPO }},_DB_NAME=${{ vars.GCP_DB_NAME }},_API_SERVICE_ACCOUNT_ID=${{ vars.GCP_API_SERVICE_ACCOUNT_ID }},_WEB_SERVICE_ACCOUNT_ID=${{ vars.GCP_WEB_SERVICE_ACCOUNT_ID }},_API_SERVICE_NAME=${{ vars.GCP_API_SERVICE_NAME }},_WEB_SERVICE_NAME=${{ vars.GCP_WEB_SERVICE_NAME }},_MIGRATION_JOB_NAME=${{ vars.GCP_MIGRATION_JOB_NAME }},_VPC_NAME=${{ vars.GCP_VPC_NAME }},_SUBNET_NAME=${{ vars.GCP_SUBNET_NAME }},_JWT_SECRET_NAME=${{ vars.GCP_JWT_SECRET_NAME }},_SENDGRID_SECRET_NAME=${{ vars.GCP_SENDGRID_SECRET_NAME }},_EMAIL_FROM_SECRET_NAME=${{ vars.GCP_EMAIL_FROM_SECRET_NAME }},_CLOUD_SQL_INSTANCE=${{ vars.GCP_CLOUD_SQL_INSTANCE }}" \
             .

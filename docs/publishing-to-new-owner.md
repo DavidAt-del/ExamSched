@@ -10,7 +10,7 @@ This guide prepares the repository for transfer to another GitHub account and de
 - Push this repository to the new remote.
 - Recreate branch protections, reviewers, and any repository secrets outside this codebase.
 - Reconfigure any external integrations that pointed at the old repository URL.
-- Review `docs/github-workflows.md` and configure GitHub Pages plus the `staging` / `production` GitHub Environments if you want to deploy from GitHub Actions.
+- Review `docs/github-workflows.md` and configure GitHub Pages plus the `staging` / `production` GitHub Environments if you want to deploy from GitHub Actions. Pushes to `main` and `develop` deploy to `staging` after the `staging` environment is populated.
 
 ### GCP bootstrap
 
@@ -83,10 +83,10 @@ The pipeline in `cloudbuild.yaml` is now parameterized. Set the trigger substitu
 If the new owner wants deployment initiated from GitHub instead of a native
 Cloud Build trigger alone:
 
-- configure Workload Identity Federation for GitHub Actions
+- apply Terraform so Workload Identity Federation exists in GCP
 - create GitHub Environments such as `staging` and `production`
-- add the variables listed in `docs/github-workflows.md`
-- run the `Deploy to GCP` workflow manually from the Actions tab
+- run `npm run sync:github-env -- --repo <owner/repo> --environment staging`
+- push to `main` / `develop` for automatic staging deployment, or run `Deploy to GCP` manually from the Actions tab
 
 ## Notes
 

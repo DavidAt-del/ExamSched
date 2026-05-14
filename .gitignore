@@ -38,6 +38,8 @@ cloudbuild.substitutions.local.yaml
 infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.*
+infra/*.tfplan
+infra/tfplan
 infra/.terraform.lock.hcl
 infra/terraform.tfvars
 

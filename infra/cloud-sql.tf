@@ -31,6 +31,7 @@ resource "google_sql_database_instance" "pg" {
   depends_on       = [google_service_networking_connection.private_vpc_peering]
 
   settings {
+    edition           = "ENTERPRISE"
     tier              = "db-custom-2-7680"
     availability_type = "ZONAL"
     disk_autoresize   = true

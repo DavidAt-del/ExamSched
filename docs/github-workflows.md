@@ -36,7 +36,15 @@ the manual fallback:
 
 ### `/.github/workflows/deploy-gcp.yml`
 
-Manual deployment workflow triggered from the GitHub Actions UI.
+GCP deployment workflow triggered by pushes and manual dispatch.
+
+It runs automatically on pushes to:
+
+- `main` → `staging`
+- `develop` → `staging`
+
+Production is intentionally manual-only. Select `production` from the Actions UI
+and enter `deploy` in `confirm_production`.
 
 It:
 
@@ -45,7 +53,10 @@ It:
 3. authenticates to Google Cloud using GitHub OIDC and Workload Identity Federation
 4. submits the repository's `cloudbuild.yaml` pipeline with the correct substitutions
 
-Production deploys require the operator to type `deploy` into the `confirm_production` input.
+Push-triggered deployments use the `staging` GitHub Environment variables.
+Production deploys require the operator to type `deploy` into the
+`confirm_production` input and should be protected with GitHub Environment
+reviewers.
 
 ## Recommended GitHub Environments
 
@@ -94,7 +105,23 @@ terraform apply
 terraform output
 ```
 
-Then map the Terraform outputs and `cloudbuild.substitutions.local.yaml` values into the GitHub Environment variables listed above.
+Then sync Terraform outputs into the GitHub Environment variables listed above:
+
+```bash
+npm run sync:github-env -- \
+  --repo DavidAt-del/ExamSched \
+  --environment staging \
+  --project-id your-gcp-project-id \
+  --region us-central1
+```
+
+Use `--dry-run` first if you want to preview values without writing to GitHub:
+
+```bash
+npm run sync:github-env -- --repo DavidAt-del/ExamSched --environment staging --dry-run
+```
+
+You can also map the Terraform outputs manually if needed.
 
 Recommended output mapping:
 
@@ -129,6 +156,18 @@ the Cloud Build service account the permissions needed by `cloudbuild.yaml`.
 The default trusted repository is `DavidAt-del/ExamSched`. Override
 `github_repository` in `infra/terraform.tfvars` if the repository is renamed or
 transferred again.
+
+## Push deploy flow
+
+After Terraform has been applied and `npm run sync:github-env` has populated the
+`staging` environment, deployment runs automatically when code is pushed to
+`main` or `develop`.
+
+The push-triggered path is:
+
+1. `CI` validates the repository
+2. `Publish docs` regenerates GitHub Pages from TypeDoc
+3. `Deploy to GCP` submits `cloudbuild.yaml` to Cloud Build using the `staging` environment variables
 
 ## Manual deploy flow
 
