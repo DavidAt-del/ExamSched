@@ -169,7 +169,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          gcloud builds submit \
+          gcloud beta builds submit \
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --config cloudbuild.yaml \
             --substitutions "SHORT_SHA=${SHORT_SHA},COMMIT_SHA=${{ steps.meta.outputs.deploy_sha }},_REGION=${{ vars.GCP_REGION }},_ENV=${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }},_SEED_PROFILE=${SEED_PROFILE},_AR_REPO=${{ vars.GCP_AR_REPO }},_DB_NAME=${{ vars.GCP_DB_NAME }},_API_SERVICE_ACCOUNT_ID=${{ vars.GCP_API_SERVICE_ACCOUNT_ID }},_WEB_SERVICE_ACCOUNT_ID=${{ vars.GCP_WEB_SERVICE_ACCOUNT_ID }},_API_SERVICE_NAME=${{ vars.GCP_API_SERVICE_NAME }},_WEB_SERVICE_NAME=${{ vars.GCP_WEB_SERVICE_NAME }},_MIGRATION_JOB_NAME=${{ vars.GCP_MIGRATION_JOB_NAME }},_VPC_NAME=${{ vars.GCP_VPC_NAME }},_SUBNET_NAME=${{ vars.GCP_SUBNET_NAME }},_JWT_SECRET_NAME=${{ vars.GCP_JWT_SECRET_NAME }},_SENDGRID_SECRET_NAME=${{ vars.GCP_SENDGRID_SECRET_NAME }},_EMAIL_FROM_SECRET_NAME=${{ vars.GCP_EMAIL_FROM_SECRET_NAME }},_CLOUD_SQL_INSTANCE=${{ vars.GCP_CLOUD_SQL_INSTANCE }}" \
