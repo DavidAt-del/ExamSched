@@ -115,6 +115,18 @@ cloudbuild.substitutions.example.yaml
 
 Apply those substitution values to the target project's Cloud Build trigger.
 
+## GitHub Actions deployment option
+
+This repository also includes GitHub Actions workflows under `/.github/workflows/`:
+
+- `ci.yml` — validation on pushes and pull requests
+- `docs.yml` — publishes `docs/reference/html/` to GitHub Pages
+- `deploy-gcp.yml` — manual deploy to GCP by submitting `cloudbuild.yaml`
+
+If you want GitHub to orchestrate deployments instead of relying only on a
+native Cloud Build trigger, configure GitHub Environments and OIDC as described
+in `docs/github-workflows.md`.
+
 ## Relationship to runtime `.env`
 
 `npm run setup:gcp` prepares infrastructure and CI/CD configuration.
@@ -131,6 +143,7 @@ For Cloud Run deployments, Terraform and Cloud Build provide those values throug
 ## Troubleshooting
 
 ### `Missing GCP project id`
+
 Either pass the project explicitly:
 
 ```bash
@@ -144,6 +157,7 @@ gcloud config set project your-gcp-project-id
 ```
 
 ### Wrong generated names
+
 Regenerate with explicit overrides:
 
 ```bash
@@ -159,4 +173,3 @@ npm run setup:gcp -- \
 ```bash
 npm run setup:gcp -- --project-id your-gcp-project-id --dry-run
 ```
-

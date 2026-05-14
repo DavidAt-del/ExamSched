@@ -10,6 +10,7 @@ This repository is prepared for long-term maintenance by a new owner. The goal i
 ## Documentation layers
 
 ### Markdown guides
+
 Use the Markdown documents under `docs/` for workflows and operational guidance:
 
 - `docs/publishing-to-new-owner.md` — GitHub/GCP transfer flow
@@ -17,6 +18,7 @@ Use the Markdown documents under `docs/` for workflows and operational guidance:
 - `infra/README.md` — Terraform responsibilities and required APIs
 
 ### Docstrings → HTML reference docs
+
 The TypeScript codebase includes JSDoc comments on the main integration points. Generate HTML docs with:
 
 ```bash
@@ -29,6 +31,7 @@ The output is written to `docs/reference/html/`.
 ## Architectural map
 
 ### `apps/api/`
+
 The backend follows onion architecture:
 
 - `domain/` — pure business rules and entities
@@ -39,6 +42,7 @@ The backend follows onion architecture:
 - `scripts/` — operator tooling such as seeding and GCP bootstrap
 
 ### `apps/web/`
+
 The frontend is feature-oriented:
 
 - `features/` — page and domain-specific UI
@@ -46,6 +50,7 @@ The frontend is feature-oriented:
 - `shared/` — layout, i18n, reusable UI utilities
 
 ### `packages/shared/`
+
 Shared enums, Zod schemas, and DTO types used by both the API and the web app.
 
 ## Documentation conventions
@@ -68,4 +73,3 @@ npm run docs:api
 ```
 
 For deeper verification, also run integration and end-to-end tests when Docker and browsers are available.
-

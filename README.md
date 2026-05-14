@@ -53,7 +53,7 @@ The Vite dev server proxies `/api` to `http://localhost:8080`.
 Demo logins use **national ID** (not email):
 
 | Role       | National ID | Password    |
-|------------|-------------|-------------|
+| ---------- | ----------- | ----------- |
 | Admin      | `000000018` | `Admin1!23` |
 | Exam Staff | `000000026` | `Staff1!23` |
 | Proctor    | `000000034` | `123456`    |
@@ -88,6 +88,7 @@ Historical implementation notes live under `docs/archive/`, including
 ## Documentation
 
 - `docs/developer-guide.md` — maintainer guide and architecture map
+- `docs/github-workflows.md` — GitHub Actions, Pages, and GCP deployment workflow setup
 - `docs/gcp-onboarding.md` — step-by-step GCP bootstrap using your own `gcloud` credentials
 - `docs/public-release-checklist.md` — final pre-publication checklist for a new owner
 - `docs/seeding.md` — deterministic mock-data seeding profiles
@@ -100,6 +101,10 @@ Generate HTML API/reference docs from JSDoc comments with:
 ```bash
 npm run docs:api
 ```
+
+Built-in GitHub workflows now cover CI validation, GitHub Pages publication for
+the generated TypeDoc site, and manual GCP deployment orchestration. See
+`docs/github-workflows.md` for the full setup.
 
 ## GCP onboarding for a new owner
 
@@ -116,4 +121,3 @@ target project.
 
 For repository transfer and deployment into a different GCP project, see
 `docs/publishing-to-new-owner.md`.
-

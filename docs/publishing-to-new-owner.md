@@ -5,12 +5,15 @@ This guide prepares the repository for transfer to another GitHub account and de
 ## Checklist
 
 ### GitHub ownership transfer
+
 - Create the destination repository under the new GitHub owner.
 - Push this repository to the new remote.
 - Recreate branch protections, reviewers, and any repository secrets outside this codebase.
 - Reconfigure any external integrations that pointed at the old repository URL.
+- Review `docs/github-workflows.md` and configure GitHub Pages plus the `staging` / `production` GitHub Environments if you want to deploy from GitHub Actions.
 
 ### GCP bootstrap
+
 - Create a new GCP project.
 - Enable the APIs listed in `infra/README.md`.
 - Run `npm run setup:gcp -- --project-id <new-project-id>` from the repository root.
@@ -55,6 +58,7 @@ required APIs before Terraform.
 ### 2. Create the required secret versions
 
 At minimum, add versions for:
+
 - JWT signing secret
 - SendGrid API key
 - sender email address
@@ -64,6 +68,7 @@ Use the secret ids returned by `terraform output`.
 ### 3. Configure Cloud Build in the new project
 
 The pipeline in `cloudbuild.yaml` is now parameterized. Set the trigger substitutions to match the new project's Terraform outputs:
+
 - Artifact Registry repository id
 - database name
 - API service-account id
@@ -73,6 +78,16 @@ The pipeline in `cloudbuild.yaml` is now parameterized. Set the trigger substitu
 - Secret Manager secret names
 - Cloud SQL instance connection name
 
+### 4. Optionally configure GitHub Actions deployment
+
+If the new owner wants deployment initiated from GitHub instead of a native
+Cloud Build trigger alone:
+
+- configure Workload Identity Federation for GitHub Actions
+- create GitHub Environments such as `staging` and `production`
+- add the variables listed in `docs/github-workflows.md`
+- run the `Deploy to GCP` workflow manually from the Actions tab
+
 ## Notes
 
 - The application defaults still use `proctor_scheduler` locally. That is fine for local development and tests.
@@ -80,4 +95,3 @@ The pipeline in `cloudbuild.yaml` is now parameterized. Set the trigger substitu
 - `npm run setup:gcp -- --dry-run` prints the generated Terraform and Cloud Build files without writing them.
 - The root `README.md` stays product-facing; operational transfer details live here so the repository root remains clean.
 - Before making the repository public, walk through `docs/public-release-checklist.md` and `SECURITY.md`.
-

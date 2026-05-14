@@ -21,24 +21,29 @@ npm --workspace @app/api run seed:mocker -- --seed 42 --extra-proctors 30
 ## Profiles
 
 ### `demo`
+
 Small curated dataset for product walkthroughs.
 
 Includes:
+
 - fixed admin and exam-staff credentials
 - fixed proctor accounts used by existing demos/tests
 - open, scheduled, sent, and closed exam periods
 - audit log, availability, assignments, and notification history
 
 ### `mocker`
+
 Richer local dataset that keeps the curated users but adds deterministic fake staff, proctors, exams, and scheduler artifacts.
 
 Best for:
+
 - UI QA
 - screenshot generation
 - testing pagination or denser lists
 - trying scheduling flows with more realistic data volumes
 
 ### `load`
+
 A heavier dataset for local stress-testing without changing application code.
 
 ## Useful flags
@@ -82,7 +87,7 @@ Defaults match `apps/api/.env.example`, so the standard Docker Compose PostgreSQ
 Generated data is driven by Faker with a numeric seed. If you reuse the same `--seed` and the same options, the resulting dataset shape will be the same.
 
 That makes the seeder suitable for:
+
 - reproducible QA bugs
 - shared review environments
 - stable screenshots for docs or demos
-

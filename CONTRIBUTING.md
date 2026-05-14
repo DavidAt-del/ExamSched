@@ -17,6 +17,7 @@ The local web app runs on `http://localhost:5173` and proxies API traffic to `ht
 
 - `README.md` — product-facing setup and architecture summary
 - `docs/developer-guide.md` — maintainer-facing architecture map and doc conventions
+- `docs/github-workflows.md` — GitHub Actions, Pages, and deploy environment setup
 - `docs/seeding.md` — deterministic mock-data seeding profiles
 - `docs/gcp-onboarding.md` — GCP bootstrap for a new owner or project
 - `docs/publishing-to-new-owner.md` — transfer guide for GitHub + GCP
@@ -82,4 +83,3 @@ Before opening a PR, make sure:
 - docs are updated when behavior or onboarding changes
 - seeded/demo flows still work when user-facing functionality changes
 - no secrets, personal paths, or account-specific identifiers were added to tracked files
-

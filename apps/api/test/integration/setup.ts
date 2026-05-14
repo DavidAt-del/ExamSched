@@ -1,5 +1,6 @@
 import 'reflect-metadata';
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { execSync } from 'node:child_process';
+import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { DataSource } from 'typeorm';
 import { buildDataSourceOptions } from '../../src/infrastructure/persistence/typeorm/data-source.js';
 
@@ -9,8 +10,31 @@ export interface TestDb {
   stop: () => Promise<void>;
 }
 
+function configureContainerRuntimeCompatibility(): void {
+  if (process.env.TESTCONTAINERS_RYUK_DISABLED) {
+    return;
+  }
+
+  try {
+    const versionOutput = execSync('docker --version', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8',
+    }).toLowerCase();
+
+    if (versionOutput.includes('podman')) {
+      process.env.TESTCONTAINERS_RYUK_DISABLED = 'true';
+    }
+  } catch {
+    // Leave Testcontainers defaults in place when docker isn't available or
+    // version detection fails.
+  }
+}
+
 export async function startTestDb(): Promise<TestDb> {
-  const container = await new PostgreSqlContainer('postgres:17-alpine')
+  configureContainerRuntimeCompatibility();
+
+  const { PostgreSqlContainer } = await import('@testcontainers/postgresql');
+  const container = await new PostgreSqlContainer('postgres:17')
     .withDatabase('proctor_test')
     .withUsername('app')
     .withPassword('app')

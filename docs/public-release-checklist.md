@@ -51,4 +51,3 @@ Use this checklist before publishing the repository under a new GitHub account o
 - [ ] Share the Cloud Build trigger substitution workflow
 - [ ] Share how to seed local demo and mocker datasets
 - [ ] Share how to regenerate docs and run the main quality gates
-

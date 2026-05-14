@@ -32,10 +32,26 @@ afterAll(async () => {
 describe('TypeOrmAssignmentRepository', () => {
   it('hasFutureForUser returns false for open period, true for scheduled/sent', async () => {
     // Create a proctor user
+    const adminId = '11111111-1111-1111-1111-111111111111';
     const proctorId = '22222222-2222-2222-2222-222222222222';
+    const admin = new User({
+      id: adminId,
+      nationalId: NationalId.create('000000018'),
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@example.com',
+      phone: null,
+      passwordHash: 'h',
+      role: UserRole.Admin,
+      proctorType: null,
+      mustChangePassword: false,
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     const proctor = new User({
       id: proctorId,
-      nationalId: NationalId.create('000000019'),
+      nationalId: NationalId.create('000000026'),
       firstName: 'Alice',
       lastName: 'Smith',
       email: 'alice@example.com',
@@ -48,6 +64,7 @@ describe('TypeOrmAssignmentRepository', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    await userRepo.save(admin);
     await userRepo.save(proctor);
 
     const now = new Date();
@@ -60,7 +77,7 @@ describe('TypeOrmAssignmentRepository', () => {
       name: 'Open Period',
       deadline: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
       status: ExamPeriodStatus.Open,
-      createdBy: 'admin',
+      createdBy: adminId,
       createdAt: now,
       updatedAt: now,
     });
@@ -71,7 +88,7 @@ describe('TypeOrmAssignmentRepository', () => {
       name: 'Closed Period',
       deadline: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
       status: ExamPeriodStatus.Closed,
-      createdBy: 'admin',
+      createdBy: adminId,
       createdAt: now,
       updatedAt: now,
     });
@@ -82,7 +99,7 @@ describe('TypeOrmAssignmentRepository', () => {
       name: 'Scheduled Period',
       deadline: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
       status: ExamPeriodStatus.Scheduled,
-      createdBy: 'admin',
+      createdBy: adminId,
       createdAt: now,
       updatedAt: now,
     });
@@ -145,6 +162,9 @@ describe('TypeOrmAssignmentRepository', () => {
     });
     await assignmentRepo.saveOne(closedAssignment);
 
+    // Open and Closed periods should not block deactivation.
+    expect(await assignmentRepo.hasFutureForUser(proctorId, now)).toBe(false);
+
     const scheduledAssignment = new Assignment({
       id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
       examId: scheduledExam.id,
@@ -156,15 +176,7 @@ describe('TypeOrmAssignmentRepository', () => {
     });
     await assignmentRepo.saveOne(scheduledAssignment);
 
-    // Check hasFutureForUser for each scenario
-    const hasOpenFuture = await assignmentRepo.hasFutureForUser(proctorId, now);
-    const hasClosedFuture = await assignmentRepo.hasFutureForUser(proctorId, now);
-    const hasScheduledFuture = await assignmentRepo.hasFutureForUser(proctorId, now);
-
-    // Open and Closed periods should return false; Scheduled should return true
-    expect(hasOpenFuture).toBe(false); // open period not in ['scheduled', 'sent']
-    expect(hasClosedFuture).toBe(false); // closed period not in ['scheduled', 'sent']
-    expect(hasScheduledFuture).toBe(true); // scheduled period is in ['scheduled', 'sent']
+    // Scheduled periods should block deactivation.
+    expect(await assignmentRepo.hasFutureForUser(proctorId, now)).toBe(true);
   });
 });
-
