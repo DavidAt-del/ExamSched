@@ -1,0 +1,6 @@
+#!include:.gitignore
+
+# Google Cloud build submissions from GitHub Actions create a temporary
+# gha-creds-*.json file in the workspace. Cloud Build source uploads must
+# never include that credential file.
+gha-creds-*.json
