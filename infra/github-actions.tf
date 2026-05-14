@@ -101,6 +101,12 @@ resource "google_project_iam_member" "cloudbuild_compute_source_reader" {
   member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 
+resource "google_project_iam_member" "cloudbuild_compute_log_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 resource "google_project_iam_member" "cloudbuild_network_user" {
   project = var.project_id
   role    = "roles/compute.networkUser"
