@@ -50,7 +50,8 @@ The generated TypeDoc site is uploaded as a workflow artifact named `api-referen
 
 Runs after successful `CI` runs on `main`, and manually via `workflow_dispatch`.
 
-It builds the TypeDoc site and deploys `docs/reference/html/` to GitHub Pages.
+It checks out the exact commit SHA that triggered `CI`, builds the TypeDoc site,
+and deploys `docs/reference/html/` to GitHub Pages.
 
 The workflow asks `actions/configure-pages` to enable Pages automatically for a
 new repository. If the repository settings or permissions still block that, use
@@ -78,6 +79,28 @@ It:
 2. validates that the target GitHub Environment contains all required GCP values
 3. authenticates to Google Cloud using GitHub OIDC and Workload Identity Federation
 4. submits the repository's `cloudbuild.yaml` pipeline with the correct substitutions
+
+Automatic staging deployments submit `_SEED_PROFILE=demo` so Cloud Build runs a
+deterministic Cloud SQL seed job after migrations. Manual dispatch adds a
+`seed_profile` input with `none`, `demo`, `mocker`, and `load` choices.
+
+When `environment=production`, non-`none` seed profiles require the additional
+manual confirmation `confirm_seeded_production=seed-production`.
+
+The workflow validates both `GCP_SENDGRID_SECRET_NAME` and
+`GCP_EMAIL_FROM_SECRET_NAME`, and passes them through to `cloudbuild.yaml`,
+which binds them to the API Cloud Run service as `SENDGRID_API_KEY` and
+`EMAIL_FROM`.
+
+Inside `cloudbuild.yaml`, the release flow is now:
+
+1. secret scan, install, lint, typecheck, unit, integration, and e2e tests
+2. build and push API/web images
+3. run the migration Cloud Run Job against Cloud SQL
+4. run the seed Cloud Run Job against Cloud SQL when `_SEED_PROFILE != none`
+5. deploy the API service and run `/api/health` smoke checks
+6. on staging seeded deploys, verify the seeded admin account can log in
+7. deploy the web service and run a smoke check against the deployed site
 
 Automatic deployments use the `staging` GitHub Environment variables.
 Production deploys require the operator to type `deploy` into the

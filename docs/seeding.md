@@ -82,6 +82,39 @@ The seeder uses the same environment variables as the API:
 
 Defaults match `apps/api/.env.example`, so the standard Docker Compose PostgreSQL setup works out of the box.
 
+## GCP / Cloud SQL seeding
+
+The deployment pipeline also supports a dedicated Cloud SQL seed job for GCP.
+It runs inside a Cloud Run Job and uses the workload's existing service-account
+credentials plus Cloud SQL IAM auth.
+
+Command path inside the deployed API image:
+
+```bash
+npx tsx apps/api/scripts/seed-gcp.ts --profile demo
+```
+
+Required environment variables for the GCP seed path:
+
+- `CLOUD_SQL_INSTANCE`
+- `DB_USER`
+- `DB_NAME`
+
+Unlike the local seeder, the GCP seed job does **not** fall back to localhost,
+`app`, or password defaults. The Cloud Build / Cloud Run job must pass the real
+Cloud SQL connection name and IAM database user explicitly.
+
+In the checked-in deployment graph:
+
+- `develop` / `main` automatic staging deploys pass `_SEED_PROFILE=demo`
+- manual deploys can choose `none`, `demo`, `mocker`, or `load`
+- production deploys require an extra explicit confirmation before using any
+  non-`none` seed profile
+- staging seeded deploys also run a smoke check that logs in with the seeded
+  admin account to verify the loaded dataset is actually usable
+- production should normally use `none` unless you are intentionally performing
+  a controlled bootstrap load
+
 ## Determinism
 
 Generated data is driven by Faker with a numeric seed. If you reuse the same `--seed` and the same options, the resulting dataset shape will be the same.

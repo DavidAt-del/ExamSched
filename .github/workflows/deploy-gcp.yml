@@ -26,6 +26,21 @@ on:
         required: false
         default: ''
         type: string
+      seed_profile:
+        description: Seed profile for the Cloud SQL seed job. Use `none` to skip seeding.
+        required: false
+        default: none
+        type: choice
+        options:
+          - none
+          - demo
+          - mocker
+          - load
+      confirm_seeded_production:
+        description: Additional safeguard for production seed runs. Type "seed-production" only for an intentional controlled bootstrap load.
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -64,6 +79,10 @@ jobs:
           set -euo pipefail
           if [ "${{ inputs.environment }}" = "production" ] && [ "${{ inputs.confirm_production }}" != "deploy" ]; then
             echo 'Production deployments require confirm_production=deploy.' >&2
+            exit 1
+          fi
+          if [ "${{ inputs.environment }}" = "production" ] && [ "${{ inputs.seed_profile }}" != "none" ] && [ "${{ inputs.confirm_seeded_production }}" != "seed-production" ]; then
+            echo 'Production seed runs require confirm_seeded_production=seed-production.' >&2
             exit 1
           fi
 
@@ -146,11 +165,12 @@ jobs:
         shell: bash
         env:
           SHORT_SHA: ${{ steps.meta.outputs.short_sha }}
+          SEED_PROFILE: ${{ github.event_name == 'workflow_dispatch' && inputs.seed_profile || 'demo' }}
         run: |
           set -euo pipefail
 
           gcloud builds submit \
             --project "${{ vars.GCP_PROJECT_ID }}" \
             --config cloudbuild.yaml \
-            --substitutions "SHORT_SHA=${SHORT_SHA},COMMIT_SHA=${{ steps.meta.outputs.deploy_sha }},_REGION=${{ vars.GCP_REGION }},_ENV=${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }},_AR_REPO=${{ vars.GCP_AR_REPO }},_DB_NAME=${{ vars.GCP_DB_NAME }},_API_SERVICE_ACCOUNT_ID=${{ vars.GCP_API_SERVICE_ACCOUNT_ID }},_WEB_SERVICE_ACCOUNT_ID=${{ vars.GCP_WEB_SERVICE_ACCOUNT_ID }},_API_SERVICE_NAME=${{ vars.GCP_API_SERVICE_NAME }},_WEB_SERVICE_NAME=${{ vars.GCP_WEB_SERVICE_NAME }},_MIGRATION_JOB_NAME=${{ vars.GCP_MIGRATION_JOB_NAME }},_VPC_NAME=${{ vars.GCP_VPC_NAME }},_SUBNET_NAME=${{ vars.GCP_SUBNET_NAME }},_JWT_SECRET_NAME=${{ vars.GCP_JWT_SECRET_NAME }},_SENDGRID_SECRET_NAME=${{ vars.GCP_SENDGRID_SECRET_NAME }},_EMAIL_FROM_SECRET_NAME=${{ vars.GCP_EMAIL_FROM_SECRET_NAME }},_CLOUD_SQL_INSTANCE=${{ vars.GCP_CLOUD_SQL_INSTANCE }}" \
+            --substitutions "SHORT_SHA=${SHORT_SHA},COMMIT_SHA=${{ steps.meta.outputs.deploy_sha }},_REGION=${{ vars.GCP_REGION }},_ENV=${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'staging' }},_SEED_PROFILE=${SEED_PROFILE},_AR_REPO=${{ vars.GCP_AR_REPO }},_DB_NAME=${{ vars.GCP_DB_NAME }},_API_SERVICE_ACCOUNT_ID=${{ vars.GCP_API_SERVICE_ACCOUNT_ID }},_WEB_SERVICE_ACCOUNT_ID=${{ vars.GCP_WEB_SERVICE_ACCOUNT_ID }},_API_SERVICE_NAME=${{ vars.GCP_API_SERVICE_NAME }},_WEB_SERVICE_NAME=${{ vars.GCP_WEB_SERVICE_NAME }},_MIGRATION_JOB_NAME=${{ vars.GCP_MIGRATION_JOB_NAME }},_VPC_NAME=${{ vars.GCP_VPC_NAME }},_SUBNET_NAME=${{ vars.GCP_SUBNET_NAME }},_JWT_SECRET_NAME=${{ vars.GCP_JWT_SECRET_NAME }},_SENDGRID_SECRET_NAME=${{ vars.GCP_SENDGRID_SECRET_NAME }},_EMAIL_FROM_SECRET_NAME=${{ vars.GCP_EMAIL_FROM_SECRET_NAME }},_CLOUD_SQL_INSTANCE=${{ vars.GCP_CLOUD_SQL_INSTANCE }}" \
             .

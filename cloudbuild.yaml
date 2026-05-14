@@ -5,6 +5,7 @@ substitutions:
   _REGION: us-central1
   _AR_REPO: proctor-scheduler
   _ENV: staging
+  _SEED_PROFILE: demo
   _DB_NAME: proctor_scheduler
   _API_SERVICE_ACCOUNT_ID: api-staging
   _WEB_SERVICE_ACCOUNT_ID: web-staging
@@ -250,6 +251,35 @@ steps:
           --quiet
         gcloud run jobs execute ${_MIGRATION_JOB_NAME} --region ${_REGION} --wait
 
+  - id: seed-db
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_SEED_PROFILE}" = "none" ]; then
+          echo "Skipping Cloud SQL seed job because _SEED_PROFILE=none"
+          exit 0
+        fi
+        API_SERVICE_ACCOUNT="${_API_SERVICE_ACCOUNT_ID}@$PROJECT_ID.iam.gserviceaccount.com"
+        API_DB_USER="${_API_SERVICE_ACCOUNT_ID}@$PROJECT_ID.iam"
+        SEED_JOB_NAME="${_API_SERVICE_NAME}-seed"
+        gcloud run jobs deploy "$${SEED_JOB_NAME}" \
+          --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/api:${SHORT_SHA} \
+          --region ${_REGION} \
+          --command npx \
+          --args "tsx,apps/api/scripts/seed-gcp.ts,--profile,${_SEED_PROFILE}" \
+          --service-account "$${API_SERVICE_ACCOUNT}" \
+          --network ${_VPC_NAME} \
+          --subnet ${_SUBNET_NAME} \
+          --vpc-egress private-ranges-only \
+          --set-env-vars "NODE_ENV=production,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=$${API_DB_USER},DB_NAME=${_DB_NAME}" \
+          --task-timeout 1200 \
+          --max-retries 1 \
+          --quiet
+        gcloud run jobs execute "$${SEED_JOB_NAME}" --region ${_REGION} --wait
+
   - id: deploy-api
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: bash
@@ -271,6 +301,79 @@ steps:
           --set-secrets "JWT_SECRET=${_JWT_SECRET_NAME}:latest,SENDGRID_API_KEY=${_SENDGRID_SECRET_NAME}:latest,EMAIL_FROM=${_EMAIL_FROM_SECRET_NAME}:latest" \
           --quiet
 
+  - id: smoke-api
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        API_URL="$(gcloud run services describe ${_API_SERVICE_NAME} \
+          --region ${_REGION} \
+          --format='value(status.url)')"
+        python3 - <<'PY' "$${API_URL}"
+        import json
+        import sys
+        import time
+        from urllib.request import urlopen
+
+        base_url = sys.argv[1].rstrip('/')
+        health_url = f"{base_url}/api/health"
+        last_error = None
+        for _ in range(30):
+            try:
+                with urlopen(health_url, timeout=10) as response:
+                    payload = json.loads(response.read().decode('utf-8'))
+                    if payload.get('status') == 'ok':
+                        print(f"API smoke check passed: {health_url}")
+                        sys.exit(0)
+                    last_error = f"unexpected payload: {payload!r}"
+            except Exception as exc:  # noqa: BLE001
+                last_error = str(exc)
+            time.sleep(2)
+        raise SystemExit(f"API smoke check failed for {health_url}: {last_error}")
+        PY
+
+  - id: smoke-seeded-login
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_ENV}" != "staging" ] || [ "${_SEED_PROFILE}" = "none" ]; then
+          echo "Skipping seeded login smoke check for env=${_ENV} seed_profile=${_SEED_PROFILE}"
+          exit 0
+        fi
+        API_URL="$(gcloud run services describe ${_API_SERVICE_NAME} \
+          --region ${_REGION} \
+          --format='value(status.url)')"
+        python3 - <<'PY' "$${API_URL}"
+        import json
+        import sys
+        import time
+        from urllib.request import Request, urlopen
+
+        base_url = sys.argv[1].rstrip('/')
+        login_url = f"{base_url}/api/auth/login"
+        payload = json.dumps({"nationalId": "000000018", "password": "Admin1!23"}).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        last_error = None
+        for _ in range(20):
+            try:
+                request = Request(login_url, data=payload, headers=headers, method="POST")
+                with urlopen(request, timeout=10) as response:
+                    body = json.loads(response.read().decode("utf-8"))
+                    if response.status == 200 and body.get("user", {}).get("role") == "admin":
+                        print(f"Seeded login smoke check passed: {login_url}")
+                        sys.exit(0)
+                    last_error = f"unexpected response body: {body!r}"
+            except Exception as exc:  # noqa: BLE001
+                last_error = str(exc)
+            time.sleep(2)
+        raise SystemExit(f"Seeded login smoke check failed for {login_url}: {last_error}")
+        PY
+
   - id: deploy-web
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: bash
@@ -289,6 +392,36 @@ steps:
           --service-account "$${WEB_SERVICE_ACCOUNT}" \
           --set-env-vars "API_UPSTREAM=$${API_UPSTREAM}" \
           --quiet
+
+  - id: smoke-web
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        WEB_URL="$(gcloud run services describe ${_WEB_SERVICE_NAME} \
+          --region ${_REGION} \
+          --format='value(status.url)')"
+        python3 - <<'PY' "$${WEB_URL}"
+        import sys
+        import time
+        from urllib.request import urlopen
+
+        web_url = sys.argv[1]
+        last_error = None
+        for _ in range(30):
+            try:
+                with urlopen(web_url, timeout=10) as response:
+                    if response.status == 200:
+                        print(f"Web smoke check passed: {web_url}")
+                        sys.exit(0)
+                    last_error = f"unexpected status: {response.status}"
+            except Exception as exc:  # noqa: BLE001
+                last_error = str(exc)
+            time.sleep(2)
+        raise SystemExit(f"Web smoke check failed for {web_url}: {last_error}")
+        PY
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/api:${SHORT_SHA}

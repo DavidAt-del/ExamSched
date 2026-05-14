@@ -53,6 +53,11 @@ output "migration_job_name" {
   value       = "api-migrate-${var.environment}"
 }
 
+output "seed_job_name" {
+  description = "Cloud Run Job name used for seeded Cloud SQL loads during deploys."
+  value       = "${local.api_service_name}-seed"
+}
+
 output "vpc_name" {
   description = "VPC name used by the Cloud Run API service."
   value       = google_compute_network.vpc.name

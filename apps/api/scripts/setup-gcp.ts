@@ -33,6 +33,7 @@ export interface GcpSetupOptions {
   projectId: string;
   region: string;
   environment: string;
+  seedProfile: 'none' | 'demo';
   appSlug: string;
   resourcePrefix: string;
   artifactRegistryRepositoryId: string;
@@ -108,6 +109,7 @@ export function resolveSetupOptions(
     projectId,
     region,
     environment,
+    seedProfile: environment === 'production' ? 'none' : 'demo',
     appSlug,
     resourcePrefix,
     artifactRegistryRepositoryId,
@@ -170,6 +172,7 @@ export function renderCloudBuildSubstitutions(options: GcpSetupOptions): string 
     `  _REGION: ${options.region}`,
     `  _AR_REPO: ${options.artifactRegistryRepositoryId}`,
     `  _ENV: ${options.environment}`,
+    `  _SEED_PROFILE: ${options.seedProfile}`,
     `  _DB_NAME: ${options.databaseName}`,
     `  _CLOUD_SQL_INSTANCE: ${options.cloudSqlInstance}`,
     `  _API_SERVICE_ACCOUNT_ID: ${options.apiServiceAccountId}`,

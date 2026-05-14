@@ -48,6 +48,9 @@ Terraform intentionally does **not** create the Cloud Run services. Cloud Build
 creates and updates them after real container images exist and after Secret
 Manager versions are populated.
 
+The same applies to the migration and seed Cloud Run Jobs: `cloudbuild.yaml`
+deploys them from the built API image once real container images exist.
+
 ## Required APIs
 
 Enable before `apply`:
@@ -77,6 +80,18 @@ The exact secret ids come from `terraform output` and the Cloud Run service
 binds them via `value_source.secret_key_ref` in `cloud-run.tf`. IAM grants are
 declared in `iam.tf` (`roles/secretmanager.secretAccessor` on each secret for
 the API service account).
+
+## Seeded staging data in Cloud SQL
+
+The release pipeline now includes a dedicated Cloud Run seed job after the
+migration job. It uses:
+
+- the API service account
+- private VPC egress to Cloud SQL
+- Cloud SQL IAM authentication via `CLOUD_SQL_INSTANCE`, `DB_USER`, and `DB_NAME`
+
+The seed job intentionally requires those explicit GCP values and does not fall
+back to the local `localhost` / `app` defaults used by the laptop seeder.
 
 ## Cloud Build handoff
 

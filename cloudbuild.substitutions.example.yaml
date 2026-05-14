@@ -4,6 +4,7 @@ substitutions:
   _REGION: us-central1
   _AR_REPO: scheduler-images
   _ENV: staging
+  _SEED_PROFILE: demo
   _DB_NAME: scheduler
   _CLOUD_SQL_INSTANCE: your-gcp-project-id:us-central1:scheduler-staging-pg
   _API_SERVICE_ACCOUNT_ID: api-staging

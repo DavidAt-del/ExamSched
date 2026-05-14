@@ -23,6 +23,7 @@ COPY --from=build /repo/node_modules ./node_modules
 COPY --from=build /repo/packages/shared/dist ./packages/shared/dist
 COPY --from=build /repo/packages/shared/package.json ./packages/shared/package.json
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
+COPY --from=build /repo/apps/api/scripts ./apps/api/scripts
 COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
 USER app
 EXPOSE 8080

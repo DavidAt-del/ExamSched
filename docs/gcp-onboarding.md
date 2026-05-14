@@ -110,6 +110,11 @@ The exact secret ids come from:
 terraform output
 ```
 
+For staging deployments, the checked-in workflow graph also runs a dedicated
+Cloud SQL seed job after migrations. The job uses the API workload identity and
+expects the real `CLOUD_SQL_INSTANCE`, `DB_USER`, and `DB_NAME` values passed by
+Cloud Build / Cloud Run; it does not use the local seeder defaults.
+
 ## Cloud Build trigger handoff
 
 Start from the generated file:
@@ -125,6 +130,23 @@ cloudbuild.substitutions.example.yaml
 ```
 
 Apply those substitution values to the target project's Cloud Build trigger.
+
+The example substitutions file now also includes `_SEED_PROFILE`. Recommended
+values:
+
+- `demo` for automatic staging deploys
+- `mocker` or `load` for richer non-production QA environments
+- `none` for production unless you are intentionally running a controlled
+  bootstrap load
+
+The checked-in workflow also treats seeded production runs as a separate guarded
+operation: when manually dispatching `deploy-gcp.yml` with
+`environment=production`, any non-`none` seed profile requires the additional
+confirmation value `confirm_seeded_production=seed-production`.
+
+For staging deployments with a non-`none` seed profile, Cloud Build performs a
+post-deploy smoke check that logs in with the seeded admin account to confirm
+the loaded dataset is usable.
 
 ## GitHub Actions deployment option
 

@@ -91,6 +91,7 @@ Historical implementation notes live under `docs/archive/`, including
 - `docs/github-workflows.md` — GitHub Actions, Pages, and GCP deployment workflow setup
 - `docs/gcp-onboarding.md` — step-by-step GCP bootstrap using your own `gcloud` credentials
 - `docs/public-release-checklist.md` — final pre-publication checklist for a new owner
+- `docs/release-deployment-graph.md` — end-to-end CI → seeded GCP DB → Cloud Run deployment runbook
 - `docs/seeding.md` — deterministic mock-data seeding profiles
 - `docs/publishing-to-new-owner.md` — GitHub + GCP transfer workflow
 - `CONTRIBUTING.md` — contributor workflow and repo expectations
