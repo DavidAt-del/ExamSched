@@ -161,6 +161,12 @@ jobs:
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
 
+      - name: Install gcloud beta commands
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud components install beta --quiet
+
       - name: Submit Cloud Build pipeline
         shell: bash
         env:
