@@ -45,6 +45,18 @@ resource "google_project_iam_member" "github_actions_cloudbuild_editor" {
   member  = "serviceAccount:${google_service_account.github_actions_deploy.email}"
 }
 
+resource "google_project_iam_member" "github_actions_service_usage_consumer" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "serviceAccount:${google_service_account.github_actions_deploy.email}"
+}
+
+resource "google_project_iam_member" "github_actions_source_upload" {
+  project = var.project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.github_actions_deploy.email}"
+}
+
 resource "google_artifact_registry_repository_iam_member" "cloudbuild_artifact_writer" {
   project    = var.project_id
   location   = google_artifact_registry_repository.images.location
