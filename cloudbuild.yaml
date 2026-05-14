@@ -21,6 +21,7 @@ substitutions:
   _CLOUD_SQL_INSTANCE: ''
 
 options:
+  substitutionOption: ALLOW_LOOSE
   # Bumped from the default e2-medium so the Testcontainers Postgres in the
   # integration step has headroom; the rest of the pipeline benefits too.
   machineType: E2_HIGHCPU_8
