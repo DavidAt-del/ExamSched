@@ -95,19 +95,19 @@ steps:
         apt-get install -qq -y --no-install-recommends ca-certificates curl gnupg
         install -m 0755 -d /etc/apt/keyrings
         TMP_KEY="$(mktemp)"
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "${TMP_KEY}"
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "$${TMP_KEY}"
         # Verify fingerprint before trusting the key (defense against a
         # compromised TLS endpoint or DNS hijack on deb.nodesource.com).
-        ACTUAL_FINGERPRINT="$(gpg --show-keys --with-colons --with-fingerprint "${TMP_KEY}" \
+        ACTUAL_FINGERPRINT="$(gpg --show-keys --with-colons --with-fingerprint "$${TMP_KEY}" \
           | awk -F: '$1 == "fpr" {print $10; exit}')"
-        if [ "${ACTUAL_FINGERPRINT}" != "${EXPECTED_KEY_FINGERPRINT}" ]; then
+        if [ "$${ACTUAL_FINGERPRINT}" != "$${EXPECTED_KEY_FINGERPRINT}" ]; then
           echo "NodeSource GPG key fingerprint mismatch:" >&2
-          echo "  expected: ${EXPECTED_KEY_FINGERPRINT}" >&2
-          echo "  actual:   ${ACTUAL_FINGERPRINT}" >&2
+          echo "  expected: $${EXPECTED_KEY_FINGERPRINT}" >&2
+          echo "  actual:   $${ACTUAL_FINGERPRINT}" >&2
           exit 1
         fi
-        gpg --dearmor < "${TMP_KEY}" > /etc/apt/keyrings/nodesource.gpg
-        rm -f "${TMP_KEY}"
+        gpg --dearmor < "$${TMP_KEY}" > /etc/apt/keyrings/nodesource.gpg
+        rm -f "$${TMP_KEY}"
         echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
           > /etc/apt/sources.list.d/nodesource.list
         apt-get update -qq
@@ -137,17 +137,17 @@ steps:
         apt-get install -qq -y --no-install-recommends ca-certificates curl gnupg
         install -m 0755 -d /etc/apt/keyrings
         TMP_KEY="$(mktemp)"
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "${TMP_KEY}"
-        ACTUAL_FINGERPRINT="$(gpg --show-keys --with-colons --with-fingerprint "${TMP_KEY}" \
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key -o "$${TMP_KEY}"
+        ACTUAL_FINGERPRINT="$(gpg --show-keys --with-colons --with-fingerprint "$${TMP_KEY}" \
           | awk -F: '$1 == "fpr" {print $10; exit}')"
-        if [ "${ACTUAL_FINGERPRINT}" != "${EXPECTED_KEY_FINGERPRINT}" ]; then
+        if [ "$${ACTUAL_FINGERPRINT}" != "$${EXPECTED_KEY_FINGERPRINT}" ]; then
           echo "NodeSource GPG key fingerprint mismatch:" >&2
-          echo "  expected: ${EXPECTED_KEY_FINGERPRINT}" >&2
-          echo "  actual:   ${ACTUAL_FINGERPRINT}" >&2
+          echo "  expected: $${EXPECTED_KEY_FINGERPRINT}" >&2
+          echo "  actual:   $${ACTUAL_FINGERPRINT}" >&2
           exit 1
         fi
-        gpg --dearmor < "${TMP_KEY}" > /etc/apt/keyrings/nodesource.gpg
-        rm -f "${TMP_KEY}"
+        gpg --dearmor < "$${TMP_KEY}" > /etc/apt/keyrings/nodesource.gpg
+        rm -f "$${TMP_KEY}"
         echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
           > /etc/apt/sources.list.d/nodesource.list
         apt-get update -qq
@@ -192,7 +192,7 @@ steps:
           CI=true \
           npm --workspace @app/web run test:e2e
 
-        kill "$API_PID" "$WEB_PID" || true
+        kill "$${API_PID}" "$${WEB_PID}" || true
         docker rm -f e2e-pg || true
 
   - id: build-api-image
@@ -238,11 +238,11 @@ steps:
           --region ${_REGION} \
           --command node \
           --args "apps/api/dist/main.js" \
-          --service-account "${API_SERVICE_ACCOUNT}" \
+          --service-account "$${API_SERVICE_ACCOUNT}" \
           --network ${_VPC_NAME} \
           --subnet ${_SUBNET_NAME} \
           --vpc-egress private-ranges-only \
-          --set-env-vars "NODE_ENV=production,RUN_MIGRATIONS_ONLY=true,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=${API_DB_USER},DB_NAME=${_DB_NAME}" \
+          --set-env-vars "NODE_ENV=production,RUN_MIGRATIONS_ONLY=true,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=$${API_DB_USER},DB_NAME=${_DB_NAME}" \
           --set-secrets "JWT_SECRET=${_JWT_SECRET_NAME}:latest" \
           --task-timeout 600 \
           --max-retries 1 \
@@ -262,11 +262,11 @@ steps:
           --region ${_REGION} \
           --port 8080 \
           --allow-unauthenticated \
-          --service-account "${API_SERVICE_ACCOUNT}" \
+          --service-account "$${API_SERVICE_ACCOUNT}" \
           --network ${_VPC_NAME} \
           --subnet ${_SUBNET_NAME} \
           --vpc-egress private-ranges-only \
-          --set-env-vars "NODE_ENV=production,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=${API_DB_USER},DB_NAME=${_DB_NAME}" \
+          --set-env-vars "NODE_ENV=production,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=$${API_DB_USER},DB_NAME=${_DB_NAME}" \
           --set-secrets "JWT_SECRET=${_JWT_SECRET_NAME}:latest,SENDGRID_API_KEY=${_SENDGRID_SECRET_NAME}:latest,EMAIL_FROM=${_EMAIL_FROM_SECRET_NAME}:latest" \
           --quiet
 
@@ -285,8 +285,8 @@ steps:
           --region ${_REGION} \
           --port 8080 \
           --allow-unauthenticated \
-          --service-account "${WEB_SERVICE_ACCOUNT}" \
-          --set-env-vars "API_UPSTREAM=${API_UPSTREAM}" \
+          --service-account "$${WEB_SERVICE_ACCOUNT}" \
+          --set-env-vars "API_UPSTREAM=$${API_UPSTREAM}" \
           --quiet
 
 images:
