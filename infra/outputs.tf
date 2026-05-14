@@ -13,6 +13,11 @@ output "database_name" {
   value       = google_sql_database.app.name
 }
 
+output "cloud_sql_instance_connection_name" {
+  description = "Full Cloud SQL connection name for the GCP_CLOUD_SQL_INSTANCE GitHub Environment variable."
+  value       = google_sql_database_instance.pg.connection_name
+}
+
 output "api_service_account_id" {
   description = "API service-account id."
   value       = google_service_account.api.account_id
@@ -41,6 +46,11 @@ output "api_service_name" {
 output "web_service_name" {
   description = "Cloud Run service name for the web frontend."
   value       = local.web_service_name
+}
+
+output "migration_job_name" {
+  description = "Cloud Run Job name for the GCP_MIGRATION_JOB_NAME GitHub Environment variable."
+  value       = "api-migrate-${var.environment}"
 }
 
 output "vpc_name" {

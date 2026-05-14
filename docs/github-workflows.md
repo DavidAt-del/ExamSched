@@ -108,14 +108,15 @@ Recommended output mapping:
 | `web_service_account_id`                    | `GCP_WEB_SERVICE_ACCOUNT_ID`     |
 | `api_service_name`                          | `GCP_API_SERVICE_NAME`           |
 | `web_service_name`                          | `GCP_WEB_SERVICE_NAME`           |
+| `migration_job_name`                        | `GCP_MIGRATION_JOB_NAME`         |
 | `vpc_name`                                  | `GCP_VPC_NAME`                   |
 | `subnet_name`                               | `GCP_SUBNET_NAME`                |
 | `jwt_secret_name`                           | `GCP_JWT_SECRET_NAME`            |
 | `sendgrid_secret_name`                      | `GCP_SENDGRID_SECRET_NAME`       |
 | `email_from_secret_name`                    | `GCP_EMAIL_FROM_SECRET_NAME`     |
+| `cloud_sql_instance_connection_name`        | `GCP_CLOUD_SQL_INSTANCE`         |
 
-Set `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_MIGRATION_JOB_NAME`, and
-`GCP_CLOUD_SQL_INSTANCE` from the same generated bootstrap values.
+Set `GCP_PROJECT_ID` and `GCP_REGION` from the selected GCP project and region.
 
 ## Workload Identity Federation setup
 
