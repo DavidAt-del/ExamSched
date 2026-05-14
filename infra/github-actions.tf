@@ -2,6 +2,10 @@ data "google_project" "current" {
   project_id = var.project_id
 }
 
+data "google_compute_default_service_account" "default" {
+  project = var.project_id
+}
+
 resource "google_service_account" "github_actions_deploy" {
   account_id   = local.github_actions_service_account
   display_name = "GitHub Actions deploy (${var.environment})"
@@ -37,6 +41,12 @@ resource "google_service_account_iam_member" "github_actions_deploy_wif" {
   service_account_id = google_service_account.github_actions_deploy.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repository}"
+}
+
+resource "google_service_account_iam_member" "github_actions_act_as_cloudbuild_runtime" {
+  service_account_id = data.google_compute_default_service_account.default.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${google_service_account.github_actions_deploy.email}"
 }
 
 resource "google_project_iam_member" "github_actions_cloudbuild_editor" {
