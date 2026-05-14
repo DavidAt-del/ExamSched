@@ -1,17 +1,17 @@
 resource "google_compute_network" "vpc" {
-  name                    = "${local.name_prefix}-vpc"
+  name                    = "${local.resource_prefix}-vpc"
   auto_create_subnetworks = false
 }
 
 resource "google_compute_subnetwork" "subnet" {
-  name          = "${local.name_prefix}-subnet"
+  name          = "${local.resource_prefix}-subnet"
   ip_cidr_range = "10.10.0.0/20"
   region        = var.region
   network       = google_compute_network.vpc.id
 }
 
 resource "google_compute_global_address" "private_ip_alloc" {
-  name          = "${local.name_prefix}-pg-private-ip"
+  name          = "${local.resource_prefix}-pg-private-ip"
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   prefix_length = 16
@@ -25,7 +25,7 @@ resource "google_service_networking_connection" "private_vpc_peering" {
 }
 
 resource "google_sql_database_instance" "pg" {
-  name             = "${local.name_prefix}-pg"
+  name             = "${local.resource_prefix}-pg"
   region           = var.region
   database_version = "POSTGRES_17"
   depends_on       = [google_service_networking_connection.private_vpc_peering]
@@ -63,7 +63,7 @@ resource "google_sql_database_instance" "pg" {
 }
 
 resource "google_sql_database" "app" {
-  name     = "proctor_scheduler"
+  name     = var.database_name
   instance = google_sql_database_instance.pg.name
 }
 

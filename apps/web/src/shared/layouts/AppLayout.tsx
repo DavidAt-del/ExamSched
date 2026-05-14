@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { UserRole } from '@app/shared';
+import { ADMIN_NAV_ITEMS, isAdminWorkspaceRole, hasAnyRole } from '../../app/access';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { sessionEnded } from '../../features/auth/authSlice';
 
@@ -8,8 +9,7 @@ export function AppLayout(): JSX.Element {
   const { t } = useTranslation();
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
-  const isAdmin = user?.role === UserRole.Admin || user?.role === UserRole.ExamStaff;
-  const isAdminOnly = user?.role === UserRole.Admin;
+  const isAdmin = isAdminWorkspaceRole(user?.role);
   const isProctor = user?.role === UserRole.Proctor;
 
   const navLinkClass = ({ isActive }: { isActive: boolean }): string =>
@@ -27,24 +27,13 @@ export function AppLayout(): JSX.Element {
                   {t('app.nav.calendar')}
                 </NavLink>
               ) : null}
-               {isAdmin ? (
-                 <>
-                   <NavLink to="/admin/proctors" className={navLinkClass}>
-                     {t('app.nav.proctors')}
-                   </NavLink>
-                   <NavLink to="/admin/periods" className={navLinkClass}>
-                     {t('app.nav.periods')}
-                   </NavLink>
-                   <NavLink to="/admin/users" className={navLinkClass}>
-                     {t('app.nav.users')}
-                   </NavLink>
-                   {isAdminOnly ? (
-                     <NavLink to="/admin/audit-log" className={navLinkClass}>
-                       {t('app.nav.auditLog')}
-                     </NavLink>
-                   ) : null}
-                 </>
-               ) : null}
+              {isAdmin
+                ? ADMIN_NAV_ITEMS.filter((item) => hasAnyRole(user?.role, item.allowedRoles)).map((item) => (
+                    <NavLink key={item.to} to={item.to} className={navLinkClass}>
+                      {t(item.labelKey)}
+                    </NavLink>
+                  ))
+                : null}
             </nav>
           </div>
           <div className="flex items-center gap-3">

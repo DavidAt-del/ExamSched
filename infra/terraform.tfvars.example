@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars (ignored by git) and adjust for the target GCP project.
+
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+environment = "staging"
+
+# Optional naming customizations for a transferred repository.
+app_slug                        = "scheduler"
+resource_prefix                 = "scheduler-staging"
+artifact_registry_repository_id = "scheduler-images"
+database_name                   = "scheduler"
+api_service_account_id          = "api-staging"
+web_service_account_id          = "web-staging"
+api_service_name                = "api-staging"
+web_service_name                = "web-staging"
+
+# Service-account email without the trailing .gserviceaccount.com suffix.
+db_iam_user = "api-staging@your-gcp-project-id.iam"
+

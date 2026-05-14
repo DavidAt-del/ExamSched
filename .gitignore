@@ -23,6 +23,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# generated local script artifacts
+apps/api/scripts/*.js
+docs/reference/
+cloudbuild.substitutions.local.yaml
+
 # editor
 .idea/
 .vscode/

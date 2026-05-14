@@ -1,10 +1,20 @@
 # Cloud Build pipeline. Triggered on push to `develop` (staging) and `main` (production).
-# Env substitutions are expected to be set on the trigger:
-#   _REGION, _PROJECT_ID, _AR_REPO, _CLOUD_SQL_INSTANCE, _ENV (staging|production)
+# Override the substitutions below in the target GCP project's build trigger so
+# the same pipeline can deploy into a different account / naming scheme.
 substitutions:
   _REGION: us-central1
   _AR_REPO: proctor-scheduler
   _ENV: staging
+  _DB_NAME: proctor_scheduler
+  _API_SERVICE_ACCOUNT_ID: api-staging
+  _API_SERVICE_NAME: api-staging
+  _WEB_SERVICE_NAME: web-staging
+  _MIGRATION_JOB_NAME: api-migrate-staging
+  _VPC_NAME: proctor-staging-vpc
+  _SUBNET_NAME: proctor-staging-subnet
+  _JWT_SECRET_NAME: proctor-staging-jwt-secret
+  _SENDGRID_SECRET_NAME: proctor-staging-sendgrid-api-key
+  _EMAIL_FROM_SECRET_NAME: proctor-staging-email-from
   # Set this on the trigger to the full Cloud SQL instance connection name,
   # e.g. "my-project:us-central1:proctor-staging-pg".
   _CLOUD_SQL_INSTANCE: ''
@@ -147,11 +157,11 @@ steps:
         docker run -d --rm --name e2e-pg \
           -e POSTGRES_USER=app \
           -e POSTGRES_PASSWORD=app \
-          -e POSTGRES_DB=proctor_scheduler \
+          -e POSTGRES_DB=${_DB_NAME} \
           --network host \
           postgres:17
         for i in $(seq 1 60); do
-          if docker exec e2e-pg pg_isready -U app -d proctor_scheduler >/dev/null 2>&1; then
+          if docker exec e2e-pg pg_isready -U app -d ${_DB_NAME} >/dev/null 2>&1; then
             break
           fi
           sleep 1
@@ -164,7 +174,7 @@ steps:
         # API config — DB_HOST/DB_USER/DB_PASSWORD/DB_NAME match the
         # @app/api Zod env schema, JWT_SECRET is required at boot.
         export DB_HOST=localhost DB_PORT=5432 \
-               DB_USER=app DB_PASSWORD=app DB_NAME=proctor_scheduler \
+               DB_USER=app DB_PASSWORD=app DB_NAME=${_DB_NAME} \
                JWT_SECRET="e2e-only-secret-do-not-use-in-prod-1234"
 
         npm --workspace @app/api run migration:run
@@ -177,7 +187,7 @@ steps:
 
         E2E_SKIP_WEBSERVER=1 \
           E2E_DB_HOST=localhost E2E_DB_PORT=5432 \
-          E2E_DB_USER=app E2E_DB_PASSWORD=app E2E_DB_NAME=proctor_scheduler \
+          E2E_DB_USER=app E2E_DB_PASSWORD=app E2E_DB_NAME=${_DB_NAME} \
           CI=true \
           npm --workspace @app/web run test:e2e
 
@@ -220,21 +230,23 @@ steps:
       - |
         # Migration job mirrors the API service's identity, env, secrets, and
         # VPC connectivity so it can reach private Cloud SQL with IAM auth.
-        gcloud run jobs deploy api-migrate-${_ENV} \
+        API_SERVICE_ACCOUNT="${_API_SERVICE_ACCOUNT_ID}@$PROJECT_ID.iam.gserviceaccount.com"
+        API_DB_USER="${_API_SERVICE_ACCOUNT_ID}@$PROJECT_ID.iam"
+        gcloud run jobs deploy ${_MIGRATION_JOB_NAME} \
           --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/api:${SHORT_SHA} \
           --region ${_REGION} \
           --command node \
           --args "apps/api/dist/main.js" \
-          --service-account api-${_ENV}@$PROJECT_ID.iam.gserviceaccount.com \
-          --network proctor-${_ENV}-vpc \
-          --subnet proctor-${_ENV}-subnet \
+          --service-account "${API_SERVICE_ACCOUNT}" \
+          --network ${_VPC_NAME} \
+          --subnet ${_SUBNET_NAME} \
           --vpc-egress private-ranges-only \
-          --set-env-vars "NODE_ENV=production,RUN_MIGRATIONS_ONLY=true,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=api-${_ENV}@$PROJECT_ID.iam,DB_NAME=proctor_scheduler" \
-          --set-secrets "JWT_SECRET=proctor-${_ENV}-jwt-secret:latest" \
+          --set-env-vars "NODE_ENV=production,RUN_MIGRATIONS_ONLY=true,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=${API_DB_USER},DB_NAME=${_DB_NAME}" \
+          --set-secrets "JWT_SECRET=${_JWT_SECRET_NAME}:latest" \
           --task-timeout 600 \
           --max-retries 1 \
           --quiet
-        gcloud run jobs execute api-migrate-${_ENV} --region ${_REGION} --wait
+        gcloud run jobs execute ${_MIGRATION_JOB_NAME} --region ${_REGION} --wait
 
   - id: deploy-api
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
@@ -242,17 +254,19 @@ steps:
     args:
       - -c
       - |
-        gcloud run deploy api-${_ENV} \
+        API_SERVICE_ACCOUNT="${_API_SERVICE_ACCOUNT_ID}@$PROJECT_ID.iam.gserviceaccount.com"
+        API_DB_USER="${_API_SERVICE_ACCOUNT_ID}@$PROJECT_ID.iam"
+        gcloud run deploy ${_API_SERVICE_NAME} \
           --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/api:${SHORT_SHA} \
           --region ${_REGION} \
           --port 8080 \
           --allow-unauthenticated \
-          --service-account api-${_ENV}@$PROJECT_ID.iam.gserviceaccount.com \
-          --network proctor-${_ENV}-vpc \
-          --subnet proctor-${_ENV}-subnet \
+          --service-account "${API_SERVICE_ACCOUNT}" \
+          --network ${_VPC_NAME} \
+          --subnet ${_SUBNET_NAME} \
           --vpc-egress private-ranges-only \
-          --set-env-vars "NODE_ENV=production,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=api-${_ENV}@$PROJECT_ID.iam,DB_NAME=proctor_scheduler" \
-          --set-secrets "JWT_SECRET=proctor-${_ENV}-jwt-secret:latest,SENDGRID_API_KEY=proctor-${_ENV}-sendgrid-api-key:latest,EMAIL_FROM=proctor-${_ENV}-email-from:latest" \
+          --set-env-vars "NODE_ENV=production,CLOUD_SQL_INSTANCE=${_CLOUD_SQL_INSTANCE},DB_USER=${API_DB_USER},DB_NAME=${_DB_NAME}" \
+          --set-secrets "JWT_SECRET=${_JWT_SECRET_NAME}:latest,SENDGRID_API_KEY=${_SENDGRID_SECRET_NAME}:latest,EMAIL_FROM=${_EMAIL_FROM_SECRET_NAME}:latest" \
           --quiet
 
   - id: deploy-web
@@ -261,7 +275,7 @@ steps:
     args:
       - -c
       - |
-        gcloud run deploy web-${_ENV} \
+        gcloud run deploy ${_WEB_SERVICE_NAME} \
           --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/web:${SHORT_SHA} \
           --region ${_REGION} \
           --port 8080 \

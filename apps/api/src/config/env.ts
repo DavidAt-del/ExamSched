@@ -48,6 +48,13 @@ const EnvSchema = z.object({
 export type Env = z.infer<typeof EnvSchema>;
 
 let cached: Env | null = null;
+
+/**
+ * Validates and memoizes the process environment used by the API runtime.
+ *
+ * The loader is intentionally side-effect free beyond memoization so it can be
+ * reused in HTTP startup, migration jobs, tests, and scripts.
+ */
 export function loadEnv(): Env {
   if (cached) return cached;
   const parsed = EnvSchema.safeParse(process.env);
@@ -59,7 +66,10 @@ export function loadEnv(): Env {
   return cached;
 }
 
-// For tests
+/**
+ * Clears the memoized environment. Intended for tests that need to mutate
+ * `process.env` between cases.
+ */
 export function resetEnvCache(): void {
   cached = null;
 }

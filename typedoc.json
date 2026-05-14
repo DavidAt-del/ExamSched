@@ -1,0 +1,25 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/shared/src/index.ts",
+    "apps/api/src/config/env.ts",
+    "apps/api/src/infrastructure/persistence/typeorm/data-source.ts",
+    "apps/api/src/composition/container.ts",
+    "apps/api/src/interfaces/http/app.ts",
+    "apps/api/src/interfaces/http/routes/index.ts",
+    "apps/web/src/app/access.ts",
+    "apps/api/scripts/seed/index.ts",
+    "apps/api/scripts/setup-gcp.ts"
+  ],
+  "entryPointStrategy": "resolve",
+  "tsconfig": "tsconfig.docs.json",
+  "readme": "docs/developer-guide.md",
+  "out": "docs/reference/html",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "sort": ["source-order"],
+  "plugin": []
+}
+

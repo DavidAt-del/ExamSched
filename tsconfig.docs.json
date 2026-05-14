@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "types": ["node"]
+  },
+  "include": [
+    "packages/shared/src/**/*.ts",
+    "apps/api/src/**/*.ts",
+    "apps/api/scripts/**/*.ts",
+    "apps/web/src/app/access.ts"
+  ]
+}
+

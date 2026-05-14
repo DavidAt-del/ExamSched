@@ -14,7 +14,9 @@
     "test:integration": "vitest run --dir test/integration",
     "test:e2e": "vitest run --dir test/e2e",
     "test:watch": "vitest",
-    "seed:demo": "node scripts/seed-dev.mjs",
+    "seed:demo": "tsx scripts/seed-dev.ts",
+    "seed:mocker": "tsx scripts/seed-dev.ts --profile mocker",
+    "setup:gcp": "tsx scripts/setup-gcp.ts",
     "migration:generate": "tsx ../../node_modules/typeorm/cli.js migration:generate -d src/infrastructure/persistence/typeorm/migration-data-source.ts",
     "migration:run": "tsx ../../node_modules/typeorm/cli.js migration:run -d src/infrastructure/persistence/typeorm/migration-data-source.ts",
     "migration:revert": "tsx ../../node_modules/typeorm/cli.js migration:revert -d src/infrastructure/persistence/typeorm/migration-data-source.ts"
@@ -43,6 +45,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@testcontainers/postgresql": "^10.16.0",
     "@types/bcrypt": "^5.0.2",
     "@types/compression": "^1.7.5",

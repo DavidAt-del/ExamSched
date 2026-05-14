@@ -11,6 +11,10 @@ import { buildRouter } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestIdMiddleware, REQUEST_ID_HEADER } from './middleware/requestId.js';
 
+/**
+ * Builds the configured Express application, including logging, request IDs,
+ * security middleware, JSON parsing, and route registration.
+ */
 export function buildApp(): Express {
   const env = loadEnv();
   const app = express();

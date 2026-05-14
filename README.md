@@ -15,6 +15,8 @@ proctor-scheduler/
 ├── apps/
 │   ├── api/          # backend, onion architecture
 │   └── web/          # frontend, feature-first
+├── docs/
+│   └── archive/      # historical bootstrap + audit handoff notes
 ├── packages/
 │   └── shared/       # Zod schemas + DTO types shared by both apps
 ├── infra/            # Terraform (Cloud Run, Cloud SQL, Secret Manager, IAM)
@@ -34,6 +36,9 @@ npm install
 
 # Seed a realistic demo dataset
 npm run seed:demo
+
+# Or create a larger deterministic mock dataset
+npm run seed:mocker
 
 # Run API + web together from the repo root
 npm run dev:demo
@@ -59,6 +64,8 @@ Demo logins use **national ID** (not email):
 `npm run dev:demo` is a small Node launcher (`scripts/dev-demo.mjs`) so it
 works the same on Linux, macOS, and Windows.
 
+Advanced seeding flags are documented in `docs/seeding.md`.
+
 ## Quality gates
 
 ```bash
@@ -66,6 +73,7 @@ npm run lint
 npm run typecheck
 npm run test:unit
 npm run test:integration   # requires Docker for Testcontainers
+npm run docs:api           # generates HTML docs in docs/reference/html/
 ```
 
 ## Architecture
@@ -74,4 +82,38 @@ npm run test:integration   # requires Docker for Testcontainers
 - **Web** uses a single RTK Query `createApi` instance with feature-injected endpoints. Server state lives in the RTK Query cache; `*Slice` files only hold UI/auth state.
 - **Hebrew/RTL** is the default. The HTML element ships with `dir="rtl"` and `lang="he"`. All user-facing strings live in `apps/web/src/shared/i18n/he.json`.
 
-See `BOOTSTRAP_REPORT.md` for the bootstrap audit trail.
+Historical implementation notes live under `docs/archive/`, including
+`docs/archive/BOOTSTRAP_REPORT.md`.
+
+## Documentation
+
+- `docs/developer-guide.md` — maintainer guide and architecture map
+- `docs/gcp-onboarding.md` — step-by-step GCP bootstrap using your own `gcloud` credentials
+- `docs/public-release-checklist.md` — final pre-publication checklist for a new owner
+- `docs/seeding.md` — deterministic mock-data seeding profiles
+- `docs/publishing-to-new-owner.md` — GitHub + GCP transfer workflow
+- `CONTRIBUTING.md` — contributor workflow and repo expectations
+- `SECURITY.md` — security reporting and secret-handling guidance
+
+Generate HTML API/reference docs from JSDoc comments with:
+
+```bash
+npm run docs:api
+```
+
+## GCP onboarding for a new owner
+
+Use the repository bootstrap command to generate local `infra/terraform.tfvars`
+and `cloudbuild.substitutions.local.yaml` from your authenticated `gcloud`
+context or explicit CLI flags:
+
+```bash
+npm run setup:gcp -- --project-id your-gcp-project-id
+```
+
+Add `--enable-apis` to automatically enable the required Google APIs in the
+target project.
+
+For repository transfer and deployment into a different GCP project, see
+`docs/publishing-to-new-owner.md`.
+

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { UserRole } from '@app/shared';
+import type { UserRole } from '@app/shared';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ChangePasswordPage } from '../features/auth/pages/ChangePasswordPage';
 import { ProctorHomePage } from '../features/availability/pages/ProctorHomePage';
@@ -10,6 +10,11 @@ import { AuditLogPage } from '../features/admin/pages/AuditLogPage';
 import { SchedulePage } from '../features/scheduling/pages/SchedulePage';
 import { NotificationLogPage } from '../features/notifications/pages/NotificationLogPage';
 import { useAppSelector } from './hooks';
+import {
+  ADMIN_ONLY_ROLES,
+  ADMIN_STAFF_ROLES,
+  isAdminWorkspaceRole,
+} from './access';
 import { AppLayout } from '../shared/layouts/AppLayout';
 
 function RequireAuth({ children }: { children: JSX.Element }): JSX.Element {
@@ -30,7 +35,7 @@ function RequireRole({
   allowed,
   children,
 }: {
-  allowed: UserRole[];
+  allowed: readonly UserRole[];
   children: JSX.Element;
 }): JSX.Element {
   const user = useAppSelector((s) => s.auth.user);
@@ -41,7 +46,7 @@ function RequireRole({
 
 function HomeRedirect(): JSX.Element {
   const role = useAppSelector((s) => s.auth.user?.role);
-  if (role === UserRole.Admin || role === UserRole.ExamStaff) {
+  if (isAdminWorkspaceRole(role)) {
     return <Navigate to="/admin/proctors" replace />;
   }
   return <Navigate to="/calendar" replace />;
@@ -77,7 +82,7 @@ export function AppRoutes(): JSX.Element {
         <Route
           path="admin/proctors"
           element={
-            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+            <RequireRole allowed={ADMIN_STAFF_ROLES}>
               <ProctorsPage />
             </RequireRole>
           }
@@ -85,7 +90,7 @@ export function AppRoutes(): JSX.Element {
         <Route
           path="admin/periods"
           element={
-            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+            <RequireRole allowed={ADMIN_STAFF_ROLES}>
               <ExamPeriodsPage />
             </RequireRole>
           }
@@ -93,7 +98,7 @@ export function AppRoutes(): JSX.Element {
         <Route
           path="admin/periods/:periodId/schedule"
           element={
-            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+            <RequireRole allowed={ADMIN_STAFF_ROLES}>
               <SchedulePage />
             </RequireRole>
           }
@@ -101,7 +106,7 @@ export function AppRoutes(): JSX.Element {
         <Route
           path="admin/periods/:periodId/notification-log"
           element={
-            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+            <RequireRole allowed={ADMIN_STAFF_ROLES}>
               <NotificationLogPage />
             </RequireRole>
           }
@@ -109,19 +114,19 @@ export function AppRoutes(): JSX.Element {
         <Route
           path="admin/users"
           element={
-            <RequireRole allowed={[UserRole.Admin, UserRole.ExamStaff]}>
+            <RequireRole allowed={ADMIN_STAFF_ROLES}>
               <UsersPage />
             </RequireRole>
           }
         />
-         <Route
-           path="admin/audit-log"
-           element={
-             <RequireRole allowed={[UserRole.Admin]}>
-               <AuditLogPage />
-             </RequireRole>
-           }
-         />
+        <Route
+          path="admin/audit-log"
+          element={
+            <RequireRole allowed={ADMIN_ONLY_ROLES}>
+              <AuditLogPage />
+            </RequireRole>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

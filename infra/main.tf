@@ -30,6 +30,54 @@ variable "environment" {
   default     = "staging"
 }
 
+variable "app_slug" {
+  description = "Short, lowercase slug used to derive default resource names. Override for a renamed product or a different owning organization."
+  type        = string
+  default     = "proctor"
+}
+
+variable "resource_prefix" {
+  description = "Optional explicit prefix for shared named resources (VPC, SQL instance, secrets). Leave empty to use '<app_slug>-<environment>'."
+  type        = string
+  default     = ""
+}
+
+variable "artifact_registry_repository_id" {
+  description = "Artifact Registry repository id that stores the API and web container images."
+  type        = string
+  default     = "proctor-scheduler"
+}
+
+variable "database_name" {
+  description = "PostgreSQL database name used by the application."
+  type        = string
+  default     = "proctor_scheduler"
+}
+
+variable "api_service_account_id" {
+  description = "Optional service-account id for the API workload. Leave empty to use 'api-<environment>'."
+  type        = string
+  default     = ""
+}
+
+variable "web_service_account_id" {
+  description = "Optional service-account id for the web workload. Leave empty to use 'web-<environment>'."
+  type        = string
+  default     = ""
+}
+
+variable "api_service_name" {
+  description = "Optional Cloud Run service name for the API. Leave empty to use 'api-<environment>'."
+  type        = string
+  default     = ""
+}
+
+variable "web_service_name" {
+  description = "Optional Cloud Run service name for the web frontend. Leave empty to use 'web-<environment>'."
+  type        = string
+  default     = ""
+}
+
 variable "db_iam_user" {
   # Cloud SQL IAM authentication: when the IAM user is a service account, the
   # username is the service account's email with the trailing
@@ -41,5 +89,9 @@ variable "db_iam_user" {
 }
 
 locals {
-  name_prefix = "proctor-${var.environment}"
+  resource_prefix       = trimspace(var.resource_prefix) != "" ? trimspace(var.resource_prefix) : "${var.app_slug}-${var.environment}"
+  api_service_account   = trimspace(var.api_service_account_id) != "" ? trimspace(var.api_service_account_id) : "api-${var.environment}"
+  web_service_account   = trimspace(var.web_service_account_id) != "" ? trimspace(var.web_service_account_id) : "web-${var.environment}"
+  api_service_name      = trimspace(var.api_service_name) != "" ? trimspace(var.api_service_name) : "api-${var.environment}"
+  web_service_name      = trimspace(var.web_service_name) != "" ? trimspace(var.web_service_name) : "web-${var.environment}"
 }

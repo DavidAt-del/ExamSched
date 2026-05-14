@@ -4,9 +4,9 @@ Status as of commit `7d07611` on `main`. 9 of 15 audited gaps are closed
 (PR A + partial PR B). This document tracks the 7 still-open items so the
 next session can pick up cold.
 
-See the full audit and design rationale in
-`/home/brx/.claude/plans/i-want-you-to-adaptive-puddle.md` and the
-ratified plan summary in the body of this file.
+This archived note originally referenced a local planning document that is
+not part of the repository export. The ratified plan summary remains in the
+body of this file.
 
 ---
 
@@ -230,7 +230,7 @@ binds the env var via `value_source.secret_key_ref`. Only docs are stale.
 **Edits:**
 1. `infra/README.md` — add a row for `proctor-<env>-email-from` next to
    the `jwt-secret` and `sendgrid-api-key` rows.
-2. `BOOTSTRAP_REPORT.md §4` — add the same row in the secrets table.
+2. `docs/archive/BOOTSTRAP_REPORT.md §4` — add the same row in the secrets table.
 3. Verify (or add) `infra/iam.tf` grants the API service account
    `roles/secretmanager.secretAccessor` on the `email_from` secret.
    Cloud Run will fail to start otherwise.

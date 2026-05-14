@@ -15,6 +15,13 @@ import { NotificationIndexes1717000000000 } from './migrations/1717000000000-Not
 import { AvailabilitySubmissions1718000000000 } from './migrations/1718000000000-AvailabilitySubmissions.js';
 import { ExamCategory1719000000000 } from './migrations/1719000000000-ExamCategory.js';
 
+/**
+ * Builds the canonical TypeORM configuration for the API.
+ *
+ * `overrides` is used by tests and the Cloud SQL connector path to replace only
+ * the transport-level connection details while keeping entities and migrations
+ * aligned with the app.
+ */
 export function buildDataSourceOptions(
   overrides: Partial<DataSourceOptions> = {},
 ): DataSourceOptions {
@@ -51,6 +58,9 @@ export function buildDataSourceOptions(
   return { ...base, ...overrides } as DataSourceOptions;
 }
 
+/**
+ * Shared application datasource used for the default local/Postgres path.
+ */
 export const AppDataSource = new DataSource(buildDataSourceOptions());
 
 export default AppDataSource;

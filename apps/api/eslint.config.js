@@ -8,7 +8,7 @@ const onionForbidden = (patterns) => ({
 });
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'coverage/**', 'node_modules/**'] },
+  { ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'scripts/*.js'] },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -23,6 +23,12 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   // Onion boundary: domain layer cannot import from outer rings or any I/O.

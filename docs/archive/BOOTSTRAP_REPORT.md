@@ -1,6 +1,8 @@
 # Bootstrap Report
 
 Generated as part of the initial scaffolding of the proctor scheduling system.
+Archived under `docs/archive/` to keep the repository root focused on current
+project entry points.
 
 ## 1. File tree
 
