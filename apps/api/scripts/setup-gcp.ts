@@ -13,6 +13,8 @@ const REQUIRED_APIS = [
   'servicenetworking.googleapis.com',
   'cloudbuild.googleapis.com',
   'compute.googleapis.com',
+  'iam.googleapis.com',
+  'iamcredentials.googleapis.com',
 ] as const;
 
 /**
@@ -47,6 +49,8 @@ export interface GcpSetupOptions {
   subnetName: string;
   dbIamUser: string;
   cloudSqlInstance: string;
+  githubRepository: string;
+  githubActionsServiceAccountId: string;
   enableApis: boolean;
   dryRun: boolean;
 }
@@ -89,14 +93,16 @@ export function resolveSetupOptions(
   const environment = flags.environment ?? 'staging';
   const appSlug = sanitizeSlug(flags['app-slug'] ?? 'proctor');
   const resourcePrefix = sanitizeSlug(flags['resource-prefix'] ?? `${appSlug}-${environment}`);
-  const artifactRegistryRepositoryId =
-    flags['artifact-repo'] ?? `${sanitizeSlug(appSlug)}-images`;
+  const artifactRegistryRepositoryId = flags['artifact-repo'] ?? `${sanitizeSlug(appSlug)}-images`;
   const databaseName = flags['database-name'] ?? appSlug.replace(/-/g, '_');
   const apiServiceAccountId = flags['api-service-account-id'] ?? `api-${environment}`;
   const webServiceAccountId = flags['web-service-account-id'] ?? `web-${environment}`;
   const apiServiceName = flags['api-service-name'] ?? `api-${environment}`;
   const webServiceName = flags['web-service-name'] ?? `web-${environment}`;
   const migrationJobName = flags['migration-job-name'] ?? `api-migrate-${environment}`;
+  const githubRepository = flags['github-repository'] ?? 'DavidAt-del/ExamSched';
+  const githubActionsServiceAccountId =
+    flags['github-actions-service-account-id'] ?? `github-actions-${environment}`;
 
   return {
     projectId,
@@ -118,6 +124,8 @@ export function resolveSetupOptions(
     subnetName: `${resourcePrefix}-subnet`,
     dbIamUser: `${apiServiceAccountId}@${projectId}.iam`,
     cloudSqlInstance: `${projectId}:${region}:${resourcePrefix}-pg`,
+    githubRepository,
+    githubActionsServiceAccountId,
     enableApis: flags['enable-apis'] === 'true',
     dryRun: flags['dry-run'] === 'true',
   };
@@ -145,6 +153,9 @@ export function renderTerraformTfvars(options: GcpSetupOptions): string {
     `web_service_name = ${quote(options.webServiceName)}`,
     `db_iam_user = ${quote(options.dbIamUser)}`,
     '',
+    `github_repository = ${quote(options.githubRepository)}`,
+    `github_actions_service_account_id = ${quote(options.githubActionsServiceAccountId)}`,
+    '',
   ].join('\n');
 }
 
@@ -162,6 +173,7 @@ export function renderCloudBuildSubstitutions(options: GcpSetupOptions): string 
     `  _DB_NAME: ${options.databaseName}`,
     `  _CLOUD_SQL_INSTANCE: ${options.cloudSqlInstance}`,
     `  _API_SERVICE_ACCOUNT_ID: ${options.apiServiceAccountId}`,
+    `  _WEB_SERVICE_ACCOUNT_ID: ${options.webServiceAccountId}`,
     `  _API_SERVICE_NAME: ${options.apiServiceName}`,
     `  _WEB_SERVICE_NAME: ${options.webServiceName}`,
     `  _MIGRATION_JOB_NAME: ${options.migrationJobName}`,
@@ -201,7 +213,7 @@ export function formatSetupSummary(
     '──────────',
     '1. Review the generated Terraform values and run `terraform init && terraform plan && terraform apply` in infra/.',
     '2. Populate Secret Manager versions for JWT_SECRET, SENDGRID_API_KEY, and EMAIL_FROM.',
-    '3. Copy the generated Cloud Build substitutions into the target trigger.',
+    '3. Copy Terraform outputs and the generated Cloud Build substitutions into the GitHub Environment or Cloud Build trigger.',
   ].join('\n');
 }
 
@@ -230,7 +242,12 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    formatSetupSummary(options, context, relativeToRoot(workspaceRoot, terraformPath), relativeToRoot(workspaceRoot, cloudBuildPath)),
+    formatSetupSummary(
+      options,
+      context,
+      relativeToRoot(workspaceRoot, terraformPath),
+      relativeToRoot(workspaceRoot, cloudBuildPath),
+    ),
   );
 
   if (options.dryRun) {
@@ -265,7 +282,11 @@ function parseFlags(argv: readonly string[]): Record<string, string> {
 }
 
 function sanitizeSlug(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/--+/g, '-');
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/--+/g, '-');
 }
 
 function quote(value: string): string {
@@ -297,6 +318,8 @@ function formatHelp(): string {
     '  --api-service-name <name>       Cloud Run API service name',
     '  --web-service-name <name>       Cloud Run web service name',
     '  --migration-job-name <name>     Cloud Run job name for migrations',
+    '  --github-repository <owner/repo> Repository allowed to deploy through GitHub OIDC',
+    '  --github-actions-service-account-id <id> Service account GitHub Actions impersonates',
     '  --enable-apis                   Enable all required Google APIs before writing files',
     '  --dry-run                       Print generated files instead of writing them',
   ].join('\n');
@@ -319,4 +342,3 @@ main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
 });
-

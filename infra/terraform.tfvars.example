@@ -17,3 +17,7 @@ web_service_name                = "web-staging"
 # Service-account email without the trailing .gserviceaccount.com suffix.
 db_iam_user = "api-staging@your-gcp-project-id.iam"
 
+# GitHub Actions deployment via Workload Identity Federation.
+github_repository                     = "DavidAt-del/ExamSched"
+github_actions_service_account_id     = "github-actions-staging"
+

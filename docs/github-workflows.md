@@ -69,6 +69,7 @@ These are configured as **GitHub Environment variables** (`Settings → Environm
 | `GCP_AR_REPO`                    | Artifact Registry repository id used by `cloudbuild.yaml`.                |
 | `GCP_DB_NAME`                    | Cloud SQL database name passed to migrations and API deploys.             |
 | `GCP_API_SERVICE_ACCOUNT_ID`     | Short service-account id for the API workload, for example `api-staging`. |
+| `GCP_WEB_SERVICE_ACCOUNT_ID`     | Short service-account id for the web workload, for example `web-staging`. |
 | `GCP_API_SERVICE_NAME`           | Cloud Run API service name.                                               |
 | `GCP_WEB_SERVICE_NAME`           | Cloud Run web service name.                                               |
 | `GCP_MIGRATION_JOB_NAME`         | Cloud Run Job name used for migrations.                                   |
@@ -95,13 +96,38 @@ terraform output
 
 Then map the Terraform outputs and `cloudbuild.substitutions.local.yaml` values into the GitHub Environment variables listed above.
 
+Recommended output mapping:
+
+| Terraform output                            | GitHub Environment variable      |
+| ------------------------------------------- | -------------------------------- |
+| `github_actions_workload_identity_provider` | `GCP_WORKLOAD_IDENTITY_PROVIDER` |
+| `github_actions_service_account_email`      | `GCP_SERVICE_ACCOUNT`            |
+| `artifact_registry_repository_id`           | `GCP_AR_REPO`                    |
+| `database_name`                             | `GCP_DB_NAME`                    |
+| `api_service_account_id`                    | `GCP_API_SERVICE_ACCOUNT_ID`     |
+| `web_service_account_id`                    | `GCP_WEB_SERVICE_ACCOUNT_ID`     |
+| `api_service_name`                          | `GCP_API_SERVICE_NAME`           |
+| `web_service_name`                          | `GCP_WEB_SERVICE_NAME`           |
+| `vpc_name`                                  | `GCP_VPC_NAME`                   |
+| `subnet_name`                               | `GCP_SUBNET_NAME`                |
+| `jwt_secret_name`                           | `GCP_JWT_SECRET_NAME`            |
+| `sendgrid_secret_name`                      | `GCP_SENDGRID_SECRET_NAME`       |
+| `email_from_secret_name`                    | `GCP_EMAIL_FROM_SECRET_NAME`     |
+
+Set `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_MIGRATION_JOB_NAME`, and
+`GCP_CLOUD_SQL_INSTANCE` from the same generated bootstrap values.
+
 ## Workload Identity Federation setup
 
 `deploy-gcp.yml` is designed so you do **not** need to store a long-lived GCP JSON key in GitHub.
 
-Instead, configure Google Cloud Workload Identity Federation for GitHub Actions and grant the chosen service account permission to submit Cloud Builds and deploy Cloud Run resources.
+Terraform in `infra/github-actions.tf` configures Google Cloud Workload Identity
+Federation for GitHub Actions, creates the deployment service account, and grants
+the Cloud Build service account the permissions needed by `cloudbuild.yaml`.
 
-At a minimum, the impersonated deployment service account needs permissions equivalent to the operations performed in `cloudbuild.yaml`.
+The default trusted repository is `DavidAt-del/ExamSched`. Override
+`github_repository` in `infra/terraform.tfvars` if the repository is renamed or
+transferred again.
 
 ## Manual deploy flow
 

@@ -15,6 +15,8 @@ describe('setup-gcp bootstrap helper', () => {
     expect(options.resourcePrefix).toBe('proctor-staging');
     expect(options.cloudSqlInstance).toBe('demo-project:us-central1:proctor-staging-pg');
     expect(options.dbIamUser).toBe('api-staging@demo-project.iam');
+    expect(options.githubRepository).toBe('DavidAt-del/ExamSched');
+    expect(options.githubActionsServiceAccountId).toBe('github-actions-staging');
   });
 
   it('renders terraform and cloud build files with the derived values', () => {
@@ -28,8 +30,12 @@ describe('setup-gcp bootstrap helper', () => {
 
     expect(tfvars).toContain('project_id = "demo-project"');
     expect(tfvars).toContain('resource_prefix = "scheduler-production"');
+    expect(tfvars).toContain('github_repository = "DavidAt-del/ExamSched"');
     expect(substitutions).toContain('_REGION: europe-west1');
-    expect(substitutions).toContain('_CLOUD_SQL_INSTANCE: demo-project:europe-west1:scheduler-production-pg');
+    expect(substitutions).toContain('_WEB_SERVICE_ACCOUNT_ID: web-production');
+    expect(substitutions).toContain(
+      '_CLOUD_SQL_INSTANCE: demo-project:europe-west1:scheduler-production-pg',
+    );
     expect(substitutions).toContain('_JWT_SECRET_NAME: scheduler-production-jwt-secret');
   });
 });

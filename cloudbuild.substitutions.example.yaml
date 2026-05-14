@@ -7,6 +7,7 @@ substitutions:
   _DB_NAME: scheduler
   _CLOUD_SQL_INSTANCE: your-gcp-project-id:us-central1:scheduler-staging-pg
   _API_SERVICE_ACCOUNT_ID: api-staging
+  _WEB_SERVICE_ACCOUNT_ID: web-staging
   _API_SERVICE_NAME: api-staging
   _WEB_SERVICE_NAME: web-staging
   _MIGRATION_JOB_NAME: api-migrate-staging
@@ -15,4 +16,3 @@ substitutions:
   _JWT_SECRET_NAME: scheduler-staging-jwt-secret
   _SENDGRID_SECRET_NAME: scheduler-staging-sendgrid-api-key
   _EMAIL_FROM_SECRET_NAME: scheduler-staging-email-from
-

@@ -35,12 +35,12 @@ output "web_service_account_email" {
 
 output "api_service_name" {
   description = "Cloud Run service name for the API."
-  value       = google_cloud_run_v2_service.api.name
+  value       = local.api_service_name
 }
 
 output "web_service_name" {
   description = "Cloud Run service name for the web frontend."
-  value       = google_cloud_run_v2_service.web.name
+  value       = local.web_service_name
 }
 
 output "vpc_name" {
@@ -68,11 +68,19 @@ output "email_from_secret_name" {
   value       = google_secret_manager_secret.email_from.secret_id
 }
 
-output "api_url" {
-  value = google_cloud_run_v2_service.api.uri
+
+output "github_actions_service_account_email" {
+  description = "Service-account email for the GCP_SERVICE_ACCOUNT GitHub Environment variable."
+  value       = google_service_account.github_actions_deploy.email
 }
 
-output "web_url" {
-  value = google_cloud_run_v2_service.web.uri
+output "github_actions_workload_identity_provider" {
+  description = "Workload Identity Provider resource name for the GCP_WORKLOAD_IDENTITY_PROVIDER GitHub Environment variable."
+  value       = google_iam_workload_identity_pool_provider.github.name
+}
+
+output "cloudbuild_service_account_email" {
+  description = "Cloud Build service-account email granted deploy permissions by Terraform."
+  value       = "${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
 }
 

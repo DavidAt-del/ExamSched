@@ -78,6 +78,18 @@ variable "web_service_name" {
   default     = ""
 }
 
+variable "github_repository" {
+  description = "GitHub repository allowed to authenticate to GCP through Workload Identity Federation, in owner/repo form."
+  type        = string
+  default     = "DavidAt-del/ExamSched"
+}
+
+variable "github_actions_service_account_id" {
+  description = "Optional service-account id that GitHub Actions impersonates to submit Cloud Build deployments. Leave empty to use 'github-actions-<environment>'."
+  type        = string
+  default     = ""
+}
+
 variable "db_iam_user" {
   # Cloud SQL IAM authentication: when the IAM user is a service account, the
   # username is the service account's email with the trailing
@@ -89,9 +101,11 @@ variable "db_iam_user" {
 }
 
 locals {
-  resource_prefix       = trimspace(var.resource_prefix) != "" ? trimspace(var.resource_prefix) : "${var.app_slug}-${var.environment}"
-  api_service_account   = trimspace(var.api_service_account_id) != "" ? trimspace(var.api_service_account_id) : "api-${var.environment}"
-  web_service_account   = trimspace(var.web_service_account_id) != "" ? trimspace(var.web_service_account_id) : "web-${var.environment}"
-  api_service_name      = trimspace(var.api_service_name) != "" ? trimspace(var.api_service_name) : "api-${var.environment}"
-  web_service_name      = trimspace(var.web_service_name) != "" ? trimspace(var.web_service_name) : "web-${var.environment}"
+  resource_prefix                = trimspace(var.resource_prefix) != "" ? trimspace(var.resource_prefix) : "${var.app_slug}-${var.environment}"
+  api_service_account            = trimspace(var.api_service_account_id) != "" ? trimspace(var.api_service_account_id) : "api-${var.environment}"
+  web_service_account            = trimspace(var.web_service_account_id) != "" ? trimspace(var.web_service_account_id) : "web-${var.environment}"
+  api_service_name               = trimspace(var.api_service_name) != "" ? trimspace(var.api_service_name) : "api-${var.environment}"
+  web_service_name               = trimspace(var.web_service_name) != "" ? trimspace(var.web_service_name) : "web-${var.environment}"
+  github_actions_service_account = trimspace(var.github_actions_service_account_id) != "" ? trimspace(var.github_actions_service_account_id) : "github-actions-${var.environment}"
+  github_wif_pool_id             = substr("${local.resource_prefix}-github", 0, 32)
 }
