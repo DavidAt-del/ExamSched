@@ -28,17 +28,11 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  - id: install
-    name: node:22
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        npm ci --workspaces --include-workspace-root --no-audit --no-fund
-
   - id: secret-scan
-    # Working-tree scan (--no-git): Cloud Build's checkout has no git history.
-    # Add allowlist entries to .gitleaks.toml for known-safe placeholders.
+    # Working-tree scan (--no-git): run before dependency installation so the
+    # workspace does not yet contain node_modules or other generated trees that
+    # can introduce noisy dependency matches. Add allowlist entries to
+    # .gitleaks.toml for known-safe placeholders.
     # Pinned to a release tag for reproducibility — bump deliberately when
     # rolling forward, never use `:latest` in CI.
     name: zricethezav/gitleaks:v8.21.2
@@ -49,6 +43,14 @@ steps:
       - --no-git
       - --source=.
       - --config=.gitleaks.toml
+
+  - id: install
+    name: node:22
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        npm ci --workspaces --include-workspace-root --no-audit --no-fund
 
   - id: lint
     name: node:22
