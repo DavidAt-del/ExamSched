@@ -65,10 +65,30 @@ resource "google_artifact_registry_repository_iam_member" "cloudbuild_artifact_w
   member     = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
 }
 
+resource "google_artifact_registry_repository_iam_member" "cloudbuild_compute_artifact_writer" {
+  project    = var.project_id
+  location   = google_artifact_registry_repository.images.location
+  repository = google_artifact_registry_repository.images.name
+  role       = "roles/artifactregistry.writer"
+  member     = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 resource "google_project_iam_member" "cloudbuild_run_admin" {
   project = var.project_id
   role    = "roles/run.admin"
   member  = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "cloudbuild_compute_run_admin" {
+  project = var.project_id
+  role    = "roles/run.admin"
+  member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "cloudbuild_compute_source_reader" {
+  project = var.project_id
+  role    = "roles/storage.objectViewer"
+  member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 
 resource "google_project_iam_member" "cloudbuild_network_user" {
@@ -77,10 +97,22 @@ resource "google_project_iam_member" "cloudbuild_network_user" {
   member  = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
 }
 
+resource "google_project_iam_member" "cloudbuild_compute_network_user" {
+  project = var.project_id
+  role    = "roles/compute.networkUser"
+  member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 resource "google_service_account_iam_member" "cloudbuild_act_as_api" {
   service_account_id = google_service_account.api.name
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
+}
+
+resource "google_service_account_iam_member" "cloudbuild_compute_act_as_api" {
+  service_account_id = google_service_account.api.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 
 resource "google_service_account_iam_member" "cloudbuild_act_as_web" {
@@ -89,10 +121,22 @@ resource "google_service_account_iam_member" "cloudbuild_act_as_web" {
   member             = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
 }
 
+resource "google_service_account_iam_member" "cloudbuild_compute_act_as_web" {
+  service_account_id = google_service_account.web.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 resource "google_secret_manager_secret_iam_member" "cloudbuild_jwt_access" {
   secret_id = google_secret_manager_secret.jwt_secret.id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
+}
+
+resource "google_secret_manager_secret_iam_member" "cloudbuild_compute_jwt_access" {
+  secret_id = google_secret_manager_secret.jwt_secret.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
 
 resource "google_secret_manager_secret_iam_member" "cloudbuild_sendgrid_access" {
@@ -101,8 +145,20 @@ resource "google_secret_manager_secret_iam_member" "cloudbuild_sendgrid_access" 
   member    = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
 }
 
+resource "google_secret_manager_secret_iam_member" "cloudbuild_compute_sendgrid_access" {
+  secret_id = google_secret_manager_secret.sendgrid_api_key.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+}
+
 resource "google_secret_manager_secret_iam_member" "cloudbuild_email_from_access" {
   secret_id = google_secret_manager_secret.email_from.id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${data.google_project.current.number}@cloudbuild.gserviceaccount.com"
+}
+
+resource "google_secret_manager_secret_iam_member" "cloudbuild_compute_email_from_access" {
+  secret_id = google_secret_manager_secret.email_from.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
 }
