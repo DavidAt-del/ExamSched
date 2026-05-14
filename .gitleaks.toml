@@ -28,4 +28,6 @@ regexes = [
   # Cloud Build E2E sidecar uses an explicitly throwaway JWT secret to boot
   # the dev API; production uses Secret Manager.
   '''e2e-only-secret-do-not-use-in-prod-1234''',
+  # Public NodeSource release-signing key fingerprint pinned for Cloud Build.
+  '''9FD3B784BC1C6FC31A8A0A1C1655A0AB68576280''',
 ]
