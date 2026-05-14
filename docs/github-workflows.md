@@ -26,7 +26,13 @@ Runs on pushes to `main` and manually via `workflow_dispatch`.
 
 It builds the TypeDoc site and deploys `docs/reference/html/` to GitHub Pages.
 
-Before first use, enable Pages in the repository and choose **GitHub Actions** as the source.
+The workflow asks `actions/configure-pages` to enable Pages automatically for a
+new repository. If the repository settings or permissions still block that, use
+the manual fallback:
+
+1. open **Settings → Pages**
+2. set **Source** to **GitHub Actions**
+3. rerun the **Publish docs** workflow
 
 ### `/.github/workflows/deploy-gcp.yml`
 
