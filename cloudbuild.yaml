@@ -26,7 +26,12 @@ options:
   # Bumped from the default e2-medium so the Testcontainers Postgres in the
   # integration step has headroom; the rest of the pipeline benefits too.
   machineType: E2_HIGHCPU_8
-  logging: LEGACY
+  # CLOUD_LOGGING_ONLY writes build logs to Cloud Logging instead of the
+  # default GCS logs bucket. The GitHub Actions service account has
+  # Cloud Logging access but not Viewer/Owner on the project, so LEGACY
+  # logging causes `gcloud builds submit` to fail when it tries to stream
+  # from the GCS bucket.
+  logging: CLOUD_LOGGING_ONLY
 
 steps:
   - id: secret-scan
